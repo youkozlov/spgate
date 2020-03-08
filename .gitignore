@@ -1,0 +1,6 @@
+nbproject
+*build
+build_cmake
+spgate
+Makefile
+*.o
