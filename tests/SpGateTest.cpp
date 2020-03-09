@@ -1,4 +1,17 @@
 #include "gtest/gtest.h"
+#include "SpGate.hpp"
+
+using namespace sg;
+
+TEST(SpGateTest, Init)
+{
+    SpGate::Init spgInit{"../cfg/default.ini"};
+    SpGate spgate(spgInit);
+}
+
+
+#if 0
+#include "gtest/gtest.h"
 
 #include "mocks/MockTagAccessor.hpp"
 #include "mocks/MockSerialPort.hpp"
@@ -206,3 +219,4 @@ TEST(SpGateTest, SuccessDone)
     spGateTestDone(spg, ta);
     EXPECT_EQ(spg.getState(), SpGateState::idle);
 }
+#endif

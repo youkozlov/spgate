@@ -80,21 +80,23 @@ void rlIniFile::copyIdentifier(char *buf, const char *line)
   *buf = '\0';
 }
 
+// assumtion that
+// there are no leading tabs or spaces whitin line
 void rlIniFile::copyName(char *buf, const char *line)
 {
+  char* cptr = buf;
+
   int i = 0;
-  buf[0] = '\0';
-  //while(line[i] > ' ' && line[i] != '=')
-  while(line[i] != '\0' && line[i] != '=')
+  while(line[i] && line[i] != '=')
   {
-    *buf++ = line[i++];
+    *cptr++ = line[i++];
   }
-  *buf = '\0';
-  i--; // eventually delete spaces
-  while(i>=0 && (buf[i] == ' ' || buf[i] == '\t'))
+  *cptr = 0;
+
+  if (char* ch = strpbrk(buf, " \t"))
   {
-    buf[i--] = '\0';
-  } 
+    *ch = 0;
+  }
 }
 
 void rlIniFile::copyParam(char *buf, const char *line)
@@ -156,13 +158,9 @@ int rlIniFile::read(const char *filename, rlSocketInterface * sock)
   name_section[0] = name_name[0] = name_param[0] = '\0';
   while((filename != NULL ? (fgets(line,sizeof(line)-1,fp) != NULL) : (sock->readStr(line, sizeof(line)-1) > 0 )) != 0)
   {
-    if (char* ptr = strchr(line, '\n'))
+    if (char* ch = strpbrk(line, "\n\r"))
     {
-        *ptr = 0;
-    }
-    if (char* ptr = strchr(line, '\r'))
-    {
-        *ptr = 0;
+        *ch = 0;
     }
     if(line[0] == '[') // section identifier
     {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "types/IpAddr.hpp"
 #include "interfaces/Link.hpp"
 #include "rlsocket.h"
 
@@ -13,8 +14,13 @@ public:
     {
     }
 
-    explicit LinkRl(const char *adr, int port, int active)
-        : socket(adr, port, active)
+    explicit LinkRl(IpAddr const& ipAddr)
+        : socket(ipAddr.addr, ipAddr.port, 1)
+    {
+    }
+
+    explicit LinkRl(IpAddr const& ipAddr, int active)
+        : socket(ipAddr.addr, ipAddr.port, active)
     {
     }
     

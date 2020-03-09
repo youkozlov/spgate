@@ -8,6 +8,11 @@
 namespace sg
 {
 
+bool parseSectionId(unsigned int& prm, const char* str)
+{
+    return sscanf(str, "%*[^0-9]%u", &prm) == 1;
+}
+
 bool parseValue(IpAddr& prm, const char* str)
 {
     unsigned int a, b, c, d;
@@ -61,7 +66,7 @@ public:
         : str(s)
         , ss(str)
     {}
-    int readStr(char *buf, int len) final
+    int readStr(char *buf, int) final
     {
         std::string line;
         std::getline(ss, line);
@@ -86,12 +91,12 @@ bool ParamParser::parseFile(char const* fileName)
     {
         parseConfig(iniParser);
     }
-    catch (const char* str)
+    catch (const char*)
     {
-        LM(LE, "Catch error, please check configuration");
-        return false;    
+        LM(LE, "Configuration error is catched, please check ini file");
+        return false;
     }
-    return true;    
+    return true;
 }
 
 bool ParamParser::parseString(std::string const& data)
@@ -107,12 +112,12 @@ bool ParamParser::parseString(std::string const& data)
     {
         parseConfig(iniParser);
     }
-    catch (const char* str)
+    catch (const char*)
     {
-        LM(LE, "Catch error, please check configuration");
-        return false;    
+        LM(LE, "Configuration error is catched, please check ini file");
+        return false;
     }
-    return true;    
+    return true;
 }
 
 CommonParams const& ParamParser::getCommon() const
@@ -120,32 +125,32 @@ CommonParams const& ParamParser::getCommon() const
     return common;
 }
 
-GateParams const& ParamParser::getGate(int i) const
+GateParams const& ParamParser::getGate(unsigned int i) const
 {
     return gates[i];
 }
 
-int ParamParser::getNumGates() const
+unsigned int ParamParser::getNumGates() const
 {
     return gates.size();
 }
 
-DeviceParams const& ParamParser::getDevice(int i) const
+DeviceParams const& ParamParser::getDevice(unsigned int i) const
 {
     return devices[i];
 }
 
-int ParamParser::getNumDevices() const
+unsigned int ParamParser::getNumDevices() const
 {
     return devices.size();
 }
 
-ParamParams const& ParamParser::getParam(int i) const
+ParamParams const& ParamParser::getParam(unsigned int i) const
 {
     return params[i];
 }
 
-int ParamParser::getNumParams() const
+unsigned int ParamParser::getNumParams() const
 {
     return params.size();
 }
@@ -156,26 +161,31 @@ void ParamParser::parseConfig(rlIniFile& parser)
     parseCommon(parser);
 
     char sectionName[16] = {};
-    int i = 0;
+    unsigned int i = 0;
     do
     {
-        sprintf(sectionName, "gate%d", ++i);
+        sprintf(sectionName, "gate%d", i++);
     }
-    while (parseGates(parser, sectionName));
-        
+    while (parseGates(parser, sectionName) && i < maxNumGates);
+    
     i = 0;
     do
     {
-        sprintf(sectionName, "device%d", ++i);
+        sprintf(sectionName, "device%d", i++);
     }
-    while (parseDevices(parser, sectionName));
+    while (parseDevices(parser, sectionName) && i < maxNumDevices);
 
     i = 0;
     do
     {
-        sprintf(sectionName, "param%d", ++i);
+        sprintf(sectionName, "param%d", i++);
     }
-    while (parseParams(parser, sectionName));
+    while (parseParams(parser, sectionName) && i < maxNumParams);
+
+    LM(LI, "ParseConfig completed: gates=%u, devices=%u, params=%u"
+        , getNumGates()
+        , getNumDevices()
+        , getNumParams());
 }
 
 void ParamParser::parseCommon(rlIniFile& parser)
@@ -201,6 +211,12 @@ bool ParamParser::parseGates(rlIniFile& parser, char const* gateName)
     }
 
     GateParams prms{};
+
+    if (!parseSectionId(prms.id, gateName))
+    {
+        LM(LE, "Can't parse id of section [%s]", gateName);
+        throw("");
+    }
 
     parseName(parser, gateName, "gate_type", mandatory, [&prms](const char* str)
     {
@@ -233,6 +249,12 @@ bool ParamParser::parseDevices(rlIniFile& parser, char const* deviceName)
     
     DeviceParams prms{};
 
+    if (!parseSectionId(prms.id, deviceName))
+    {
+        LM(LE, "Can't parse id of section [%s]", deviceName);
+        throw("");
+    }
+
     parseName(parser, deviceName, "gate_id", mandatory, [&prms](const char* str)
     {
         return parseValue(prms.gateId, str);
@@ -256,6 +278,12 @@ bool ParamParser::parseParams(rlIniFile& parser, char const* paramName)
     }
     
     ParamParams prms{};
+
+    if (!parseSectionId(prms.id, paramName))
+    {
+        LM(LE, "Can't parse id for section [%s]", paramName);
+        throw("");
+    }
 
     parseName(parser, paramName, "device_id", mandatory, [&prms](const char* str)
     {
@@ -289,6 +317,7 @@ bool ParamParser::findSection(rlIniFile& parser, char const* section, NameType t
     {
         if (!strcmp(current, section))
         {
+            LM(LD, "[%s]", section);
             return true;
         }
     }
@@ -302,35 +331,29 @@ bool ParamParser::findSection(rlIniFile& parser, char const* section, NameType t
 
 bool ParamParser::parseName(rlIniFile& iniParser, char const* section, char const* name, NameType type, std::function<bool(char const*)> nameParser)
 {
-    if (const char* prmsName = iniParser.firstName(section))
+    bool isFirst = true;
+    while (const char* prmsName = isFirst ? iniParser.firstName(section) : iniParser.nextName(section))
     {
         if (!strcmp(prmsName, name))
         {
-            if (nameParser(iniParser.text(section, prmsName)))
+            char const* text = iniParser.text(section, prmsName);
+            if (nameParser(text))
             {
+                LM(LD, "%s=%s", prmsName, text);
                 return true;
             }
             LM(LE, "Can't parse name '%s' within section [%s]", name, section);
             throw("");
         }
+        isFirst = false;
     }
-    while (const char* prmsName = iniParser.nextName(section))
-    {
-        if (!strcmp(prmsName, name))
-        {
-            if (nameParser(iniParser.text(section, prmsName)))
-            {
-                return true;
-            }
-            LM(LE, "Can't parse name '%s' within section [%s]", name, section);
-            throw("");
-        }
-    }
+
     if (type == NameType::mandatory)
     {
         LM(LE, "Can't find name '%s' within section [%s]", name, section);
         throw("");
     }
+
     return false;
 }
 

@@ -1,12 +1,14 @@
-#include "FeProcessorSpNet.hpp"
+#include "GateSpBus.hpp"
 #include "DataRequest.hpp"
-#include "SerialPortRl.hpp"
+#include "sockets/LinkRl.hpp"
+#include "types/ParamsDefs.hpp"
 
 namespace sg
 {
 
 namespace
 {
+
 const char DLE = 0x10;
 const char SOH = 0x01;
 const char ISI = 0x1F;
@@ -38,16 +40,28 @@ int CRCode(char *msg, int len)
 }
 }
 
-FeProcessorSpNet::FeProcessorSpNet(Init const& init)
-    : port(init.port)
+GateSpBus::GateSpBus(Init const& init)
+    : gateParams(init.gateParams)
+    , storage(init.parser)
+    , regs(init.regs)
+{
+    link = std::unique_ptr<LinkRl>(new LinkRl(gateParams.gateAddr));
+}
+
+GateSpBus::~GateSpBus()
 {
 }
 
-FeProcessorSpNet::~FeProcessorSpNet()
+bool GateSpBus::configure()
+{
+    return storage.configure(gateParams);
+}
+
+void GateSpBus::tickInd()
 {
 }
-    
-bool FeProcessorSpNet::request(DataRequest const& req)
+
+bool GateSpBus::request(DataRequest const& req)
 {
     buf.reset();
 
@@ -77,12 +91,12 @@ bool FeProcessorSpNet::request(DataRequest const& req)
     buf.addByte(crc);
 //  --
     
-    port.send(buf.get(), buf.size());
+    link->write(buf.get(), buf.size());
 
     return true;
 }
-    
-DataRespond FeProcessorSpNet::respond()
+
+DataRespond GateSpBus::respond()
 {
     DataRespond rsp;
     return rsp;

@@ -8,13 +8,14 @@ namespace sg
 {
 
 class Link;
+struct IpAddr;
 
 class LinkAcceptorRl : public LinkAcceptor
 {
 public:
     struct Init
     {
-        int port;
+        IpAddr const& ipAddr;
     };
 
     explicit LinkAcceptorRl(Init const&);

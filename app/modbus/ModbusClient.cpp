@@ -13,7 +13,7 @@ namespace sg
     
 ModbusClient::ModbusClient(Init const& init)
     : state(ModbusClientState::init)
-    , port(init.port)
+    , ipAddr(init.ipAddr)
     , regs(init.regs)
     , stats(init.stats)
     , tick(0)
@@ -103,7 +103,7 @@ void ModbusClient::processIdle()
 
 void ModbusClient::processConnect()
 {
-    link = std::unique_ptr<Link>(new LinkRl("127.0.0.1", port, 1));
+    link = std::unique_ptr<Link>(new LinkRl(ipAddr));
     if (link->connect() < 0)
     {
         chageState(ModbusClientState::error);
@@ -207,7 +207,7 @@ bool ModbusClient::execReadCmd(ModbusTcpAdu const& adu, WrapBuffer& buf)
     return true;
 }
 
-bool ModbusClient::processReadRsp(ModbusTcpAdu const& adu, WrapBuffer& buf)
+bool ModbusClient::processReadRsp(ModbusTcpAdu const&, WrapBuffer& buf)
 {
     uint16_t numBytes = buf.read();
     if (storedAdu.numRegs * 2 != numBytes)

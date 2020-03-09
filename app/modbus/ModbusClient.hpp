@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 
+#include "types/IpAddr.hpp"
 #include "ModbusDefs.hpp"
 
 namespace sg
@@ -28,7 +29,7 @@ class ModbusClient
 public:
     struct Init
     {
-        int port;
+        IpAddr const& ipAddr;
         ModbusBuffer& regs;
         ModbusStats& stats;
     };
@@ -63,7 +64,7 @@ private:
     ModbusClientState state;
     std::unique_ptr<Link> link;
 
-    int port;
+    IpAddr const& ipAddr;
     ModbusBuffer& regs;
     ModbusStats& stats;
     

@@ -45,6 +45,7 @@ private:
     void processConnect();
     void processRun();
     void processError();
+    void printStats();
     void chageState(ModbusServerState);
     char const* toString(ModbusServerState) const;
 

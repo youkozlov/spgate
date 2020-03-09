@@ -16,61 +16,72 @@ void validate(ParamParser const& parser)
     EXPECT_EQ(common.modbusAddr.port, 12345); 
     EXPECT_EQ(common.readPeriod, 1000); 
 
-    auto& gate1 = parser.getGate(0);
-    EXPECT_EQ(gate1.gateType, GateType::sps); 
+    auto& gate0 = parser.getGate(0);
+    EXPECT_EQ(gate0.gateType, GateType::sps); 
+    EXPECT_EQ(strcmp(gate0.gateAddr.addr, "127.0.0.1"), 0);
+    EXPECT_EQ(gate0.gateAddr.port, 8001); 
+    EXPECT_EQ(gate0.addr, 00); 
+    EXPECT_EQ(gate0.id, 0); 
+
+    auto& gate1 = parser.getGate(1);
+    EXPECT_EQ(gate1.gateType, GateType::m4); 
     EXPECT_EQ(strcmp(gate1.gateAddr.addr, "127.0.0.1"), 0);
-    EXPECT_EQ(gate1.gateAddr.port, 8001); 
-    EXPECT_EQ(gate1.addr, 00); 
+    EXPECT_EQ(gate1.gateAddr.port, 8002); 
+    EXPECT_EQ(gate1.id, 1);
 
-    auto& gate2 = parser.getGate(1);
-    EXPECT_EQ(gate2.gateType, GateType::m4); 
-    EXPECT_EQ(strcmp(gate2.gateAddr.addr, "127.0.0.1"), 0);
-    EXPECT_EQ(gate2.gateAddr.port, 8002); 
+    auto& device0 = parser.getDevice(0);
+    EXPECT_EQ(device0.gateId, 0); 
+    EXPECT_EQ(device0.addr, 0); 
+    EXPECT_EQ(device0.id, 0);
 
-    auto& device1 = parser.getDevice(0);
-    EXPECT_EQ(device1.gateId, 1); 
-    EXPECT_EQ(device1.addr, 0); 
-
-    auto& param2 = parser.getParam(1);
-    EXPECT_EQ(param2.deviceId, 2); 
-    EXPECT_EQ(param2.func, 0x1d); 
-    EXPECT_EQ(param2.chan, 1); 
-    EXPECT_EQ(param2.addr, 67); 
+    auto& param1 = parser.getParam(1);
+    EXPECT_EQ(param1.deviceId, 1); 
+    EXPECT_EQ(param1.func, 0x1d); 
+    EXPECT_EQ(param1.chan, 1); 
+    EXPECT_EQ(param1.addr, 67); 
+    EXPECT_EQ(param1.id, 1);
 }
 
 TEST(ParamParserTest, ParseString)
 {
     std::string data = 
-R"foo([common]
+R"foo(
+[common]
 modbus_addr=127.0.0.1:12345
 read_period=1000
-[gate1]
+
+[gate0]
 gate_type=sps
 gate_addr=127.0.0.1:8001
 addr=00
-[gate2]
+
+[gate1]
 gate_type=m4
 gate_addr=127.0.0.1:8002
-[device1]
-gate_id=1
+
+[device0]
+gate_id=0
 addr=00
-[device2]
-gate_id=1
+
+[device1]
+gate_id=0
 addr=01
-[param1]
-device_id=1
+
+[param0]
+device_id=0
 func=1d
 chan=1
 addr=68
-[param2]
-device_id=2
+
+[param1]
+device_id=1
 func=1d
 chan=1
 addr=67
 )foo";
 
     ParamParser parser;
-    EXPECT_TRUE(parser.parseString(data));
+    ASSERT_TRUE(parser.parseString(data));
     validate(parser);
 }
 

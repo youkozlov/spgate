@@ -47,6 +47,10 @@ void ModbusServer::tickInd()
     break;
     }
     tick += 1;
+    if (tick % 4096 == 0)
+    {
+        printStats();
+    }
 }
 
 void ModbusServer::processInit()
@@ -129,6 +133,15 @@ void ModbusServer::processError()
     }
 }
 
+void ModbusServer::printStats()
+{
+    LM(LD, "ModbusStats: nRx=%u nTx=%u nInvalid=%u nError=%u nRd=%u nWr=%u nMultiWr=%u"
+        , stats.nRx, stats.nTx, stats.nInvalid
+        , stats.nError, stats.nRd, stats.nWr
+        , stats.nMultiWr
+        );
+}
+
 ModbusTcpAdu ModbusServer::parseAdu(WrapBuffer& msgBuf)
 {
     ModbusTcpAdu adu{};
@@ -162,7 +175,7 @@ bool ModbusServer::processAdu(ModbusTcpAdu const& adu, WrapBuffer& buf)
     case 0x10:
         return processMultiWriteCmd(adu, buf);
     default:
-        return sendError(01, adu, buf);
+        return sendError(ModbusErorr::IllegalFunction, adu, buf);
     }
     return false;
 }
@@ -176,11 +189,11 @@ bool ModbusServer::processReadCmd(ModbusTcpAdu const& adu, WrapBuffer& buf)
     uint16_t numBytes = numRegs * 2;
     if (numRegs >= 127)
     {
-        return sendError(03, adu, buf);
+        return sendError(ModbusErorr::IllegalDataValue, adu, buf);
     }
     if ((startReg + numRegs) >= regs.size())
     {
-        return sendError(02, adu, buf);
+        return sendError(ModbusErorr::IllegalDataAddress, adu, buf);
     }
     buf.reset();
     buf.writeBe(adu.transactionId);
@@ -204,7 +217,7 @@ bool ModbusServer::processWriteCmd(ModbusTcpAdu const& adu, WrapBuffer& buf)
     uint16_t val = buf.readBe();
     if (startReg >= regs.size())
     {
-        return sendError(02, adu, buf);
+        return sendError(ModbusErorr::IllegalDataAddress, adu, buf);
     }
     regs[startReg] = val;
     buf.reset();
@@ -225,9 +238,13 @@ bool ModbusServer::processMultiWriteCmd(ModbusTcpAdu const& adu, WrapBuffer& buf
     uint16_t startReg = buf.readBe();
     uint16_t numRegs = buf.readBe();
     uint16_t numBytes = buf.read();
+    if (numBytes != numRegs * 2)
+    {
+        return sendError(ModbusErorr::SlaveDeviceFailure, adu, buf);
+    }
     if (startReg + numRegs >= regs.size())
     {
-        return sendError(02, adu, buf);
+        return sendError(ModbusErorr::IllegalDataAddress, adu, buf);
     }
     for (int i = 0; i < numRegs; ++i, ++startReg)
     {
@@ -254,7 +271,7 @@ bool ModbusServer::sendError(int err, ModbusTcpAdu const& adu, WrapBuffer& buf)
     buf.writeBe(1 + 1 + 1);
     buf.write(adu.slaveAddr);
     buf.write(MB_ERR);
-    buf.write(err);    
+    buf.write(err);
     return true;
 }
 

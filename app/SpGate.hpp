@@ -1,19 +1,25 @@
 #pragma once
 
+#include <memory>
+#include <array>
+
+#include "utils/ParamParser.hpp"
+
+#include "modbus/ModbusDefs.hpp"
+#include "modbus/ModbusBuffer.hpp"
+
 namespace sg
 {
 
 class TagAccessor;
-class SerialPort;
-class FeProcessor;
+class LinkAcceptorRl;
+class ModbusServer;
+class Gate;
 
 enum class SpGateState
 {
     init,
-    idle,
-    request,
-    wait,
-    done,
+    run,
     error
 };
 
@@ -22,9 +28,7 @@ class SpGate
 public:
     struct Init
     {
-        TagAccessor& ta;
-        SerialPort& port;
-        FeProcessor& fe;
+        char const* iniFileName;
     };
     
     explicit SpGate(Init const&);
@@ -39,17 +43,24 @@ private:
     bool validateTags();
     bool initSerialPort();
     void processInit();
-    void processIdle();
-    void processRequest();
-    void processWait();
-    void processDone();
+    void processRun();
     void processError();
     void chageState(SpGateState);
+    char const* toString(SpGateState) const;
+
+    bool createModbus();
+    bool createGates();
+
+    char const*                     iniFileName;
+    SpGateState                     state;
+    ParamParser                     parser;
     
-    TagAccessor& ta;
-    SerialPort& port;
-    FeProcessor& fe;
-    SpGateState state;
+    ModbusStats                     modbusStats;
+    ModbusBuffer                    modbusRegs;
+    std::unique_ptr<LinkAcceptorRl> linkAcceptor;
+    std::unique_ptr<ModbusServer>   modbus;
+
+    std::array<std::unique_ptr<Gate>, maxNumGates> gates;
 };
 
 }

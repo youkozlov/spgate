@@ -1,11 +1,12 @@
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DEBUG -O0 -g -ggdb -Wextra -Wall -Wpedantic -fno-omit-frame-pointer -fsanitize=address -fsanitize=leak -fasynchronous-unwind-tables -fsanitize=undefined -fpie -fpic -fstack-protector -pipe -Werror=format-security")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DEBUG -O0 -g -ggdb -Wextra -Wall -Wpedantic -fno-omit-frame-pointer -fasynchronous-unwind-tables -fpie -fpic -fstack-protector -pipe -Werror=format-security")
+#-fsanitize=address -fsanitize=leak -fsanitize=undefined
 
 add_definitions( -DGTEST_HAS_PTHREAD=1 )
 
 add_executable(app_ut
     SpGateTest.cpp
-    SpNetTest.cpp
+    GateSpBusTest.cpp
     ModbusServerTest.cpp
     ParamParserTest.cpp
     )

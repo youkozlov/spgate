@@ -1,22 +1,18 @@
 #include "SpGate.hpp"
 
-#include "interfaces/SerialPort.hpp"
-#include "interfaces/TagAccessor.hpp"
-#include "interfaces/FeProcessor.hpp"
+#include "sockets/LinkAcceptorRl.hpp"
+#include "modbus/ModbusServer.hpp"
 
-#include "types/SerialPortSetup.hpp"
-#include "types/DataRequest.hpp"
-#include "types/DataRespond.hpp"
-#include "types/TagType.hpp"
-#include "types/AppError.hpp"
+#include "gates/GateSpBus.hpp"
+#include "gates/GateM4Bus.hpp"
+
+#include "utils/Logger.hpp"
 
 namespace sg
 {
 
 SpGate::SpGate(Init const& init)
-    : ta(init.ta)
-    , port(init.port)
-    , fe(init.fe)
+    : iniFileName(init.iniFileName)
     , state(SpGateState::init)
 {
 }
@@ -32,17 +28,8 @@ void SpGate::tickInd()
     case SpGateState::init:
         processInit();
     return;
-    case SpGateState::idle:
-        processIdle();
-    return;
-    case SpGateState::request:
-        processRequest();
-    return;
-    case SpGateState::wait:
-        processWait();
-    return;
-    case SpGateState::done:
-        processDone();
+    case SpGateState::run:
+        processRun();
     return;
     case SpGateState::error:
         processError();
@@ -50,148 +37,118 @@ void SpGate::tickInd()
     }
 }
 
-bool SpGate::validateTags()
-{
-    bool invalid = false;
-    
-    invalid |= (ta.getType("spgSerialPort") != TagType::tagShort);
-    invalid |= (ta.getType("spgSerialPortSpeed") != TagType::tagShort);
-    invalid |= (ta.getType("spgSerialPortBits") != TagType::tagShort);
-    invalid |= (ta.getType("spgSerialPortStopBits") != TagType::tagShort);
-    invalid |= (ta.getType("spgSerialPortParity") != TagType::tagShort);
-    invalid |= (ta.getType("spgSerialPortReady") != TagType::tagBool);
-    invalid |= (ta.getType("spgSerialPortErr") != TagType::tagBool);
-    invalid |= (ta.getType("spgSerialPortErrN") != TagType::tagShort);
-    
-    if (invalid)
-    {
-        ta.setShort("spgDeviceNetErrN", AppError::appTagNotFoundOrTypeMismatch);
-        ta.setBool("spgDeviceNetErr", true);
-    }
-    
-    return !invalid;
-}
-
-bool SpGate::initSerialPort()
-{
-    SerialPortSetup req;
-    req.port     = ta.getShort("spgSerialPort");
-    req.speed    = ta.getShort("spgSerialPortSpeed");
-    req.bits     = ta.getShort("spgSerialPortBits");
-    req.stopBits = ta.getShort("spgSerialPortStopBits");
-    req.parity   = ta.getShort("spgSerialPortParity");
-    int const errN = port.setup(req);
-    if (errN)
-    {
-        ta.setBool("spgSerialPortReady", false);
-        ta.setBool("spgSerialPortErr", true);
-        ta.setShort("spgSerialPortErrN", errN);
-        return false;
-    }
-    ta.setBool("spgSerialPortReady", true);
-    ta.setBool("spgSerialPortErr", false);
-    ta.setShort("spgSerialPortErrN", 0);
-    return true;
-}
-
 void SpGate::processInit()
 {
-    if (!validateTags())
+    if (!parser.parseFile(iniFileName))
     {
         chageState(SpGateState::error);
         return;
     }
 
-    if (!initSerialPort())
+    if (!createModbus())
     {
         chageState(SpGateState::error);
         return;
     }
 
-    chageState(SpGateState::idle);
-}
-
-void SpGate::processIdle()
-{
-    if (ta.getBool("spgReqExecute"))
+    if (!createGates())
     {
-        chageState(SpGateState::request);
-    }
-}
-
-void SpGate::processRequest()
-{
-    DataRequest req;
-    req.dad          = ta.getShort("spgReqDad");
-    req.sad          = ta.getShort("spgReqSad");
-    req.chanId       = ta.getShort("spgReqChanId");
-    req.paramId      = ta.getShort("spgReqParamId");
-    req.timeout      = ta.getShort("spgReqTimeout");
-    req.typeOfResult = ta.getShort("spgReqTypeOfResult");
-
-    bool const isReady = fe.request(req);
-    if (!isReady)
-    {
-        ta.setBool("spgRspError", true);
-        ta.setShort("spgRspErrN", AppError::appInvalidRequest);
-        chageState(SpGateState::done);
+        chageState(SpGateState::error);
         return;
     }
 
-    ta.setBool("spgRspBusy", true);
-    ta.setBool("spgRspError", false);
-    ta.setShort("spgRspErrN", 0);
-
-    chageState(SpGateState::wait);
+    chageState(SpGateState::run);
 }
 
-void SpGate::processWait()
+void SpGate::processRun()
 {
-    DataRespond rsp = fe.respond();
-    if (rsp.done)
+    for (auto& gate : gates)
     {
-        ta.setBool("spgRspError", rsp.error);
-        ta.setShort("spgRspErrN", rsp.errorNum);
-        switch (rsp.valueType)
-        {
-        case 0:
-            ta.setBool("spgRspBool", rsp.valueBool);
-        break;
-        case 1:
-            ta.setShort("spgRspShort", rsp.valueShort);
-        break;
-        case 2:
-            ta.setLong("spgRspLong", rsp.valueLong);
-        break;
-        case 3:
-            ta.setFloat("spgRspFloat", rsp.valueFloat);
-        break;
-        }
-        chageState(SpGateState::done);
+        if (!gate) break;
+        gate->tickInd();
     }
-}
-
-void SpGate::processDone()
-{
-    ta.setBool("spgRspBusy", false);
-    if (!ta.getBool("spgReqExecute"))
-    {
-        chageState(SpGateState::idle);
-    }
+    modbus->tickInd();
 }
 
 void SpGate::processError()
 {
 }
 
+bool SpGate::createModbus()
+{
+    auto& common = parser.getCommon();
+    
+    LinkAcceptorRl::Init acceptInit = {common.modbusAddr};
+    linkAcceptor = std::unique_ptr<LinkAcceptorRl>(new LinkAcceptorRl(acceptInit));
+
+    ModbusServer::Init modbusInit{modbusRegs, *linkAcceptor, modbusStats};
+    modbus = std::unique_ptr<ModbusServer>(new ModbusServer(modbusInit));
+
+    return true;
+}
+
+bool SpGate::createGates()
+{
+    if (parser.getNumGates() > maxNumGates || !parser.getNumGates())
+    {
+        LM(LE, "Unexpected number of configured gates=%u", parser.getNumGates());
+        return false;
+    }
+
+    for (unsigned int i = 0; i < parser.getNumGates(); ++i)
+    {
+        auto& it = parser.getGate(i);
+
+        switch (it.gateType)
+        {
+        case GateType::sps:
+        {
+            GateSpBus::Init init{it, parser, modbusRegs};
+            gates[i] = std::unique_ptr<Gate>(new GateSpBus(init));
+        }
+        break;
+        case GateType::m4:
+        {
+            GateM4Bus::Init init{it, parser, modbusRegs};
+            gates[i] = std::unique_ptr<Gate>(new GateM4Bus(init));
+        }
+        break;
+        }
+
+        if (!gates[i]->configure())
+        {
+            LM(LE, "Can't configure gate=%u", i);
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void SpGate::chageState(SpGateState newSt)
 {
+    LM(LI, "Change state: %s -> %s", toString(state), toString(newSt));
     state = newSt;
 }
 
 SpGateState SpGate::getState() const
 {
     return state;
+}
+
+char const* SpGate::toString(SpGateState st) const
+{
+    switch (st)
+    {
+    case SpGateState::init:
+        return "Init";
+    case SpGateState::run:
+        return "Run";
+    case SpGateState::error:
+        return "Error";
+    default:
+        return "Invalid";
+    }
 }
 
 }

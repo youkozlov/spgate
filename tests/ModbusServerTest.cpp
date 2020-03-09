@@ -5,12 +5,14 @@
 #include "modbus/ModbusBuffer.hpp"
 #include "sockets/LinkAcceptorRl.hpp"
 #include "utils/Utils.hpp"
+#include "types/IpAddr.hpp"
+
 #include <thread>
 #include <atomic>
 
 using namespace sg;
 
-static int testPort = 9999;
+static unsigned int testPort = 9999;
 static std::atomic<bool> done;
 static ModbusStats clientStats = {};
 static ModbusStats serverStats = {};
@@ -31,7 +33,8 @@ void clearRegisters()
 
 void server()
 {
-    LinkAcceptorRl::Init acceptInit = {testPort};
+    IpAddr const ipAddr = {"", testPort};
+    LinkAcceptorRl::Init acceptInit = {ipAddr};
     std::unique_ptr<LinkAcceptor> acceptor = std::unique_ptr<LinkAcceptorRl>(new LinkAcceptorRl(acceptInit));
     ModbusServer::Init modbusInit{serverRegisters, *acceptor, serverStats};
     ModbusServer server{modbusInit};
@@ -44,7 +47,8 @@ void server()
 
 void sendModbusAdu(ModbusRequest const& req, int rep)
 {
-    ModbusClient::Init modbusInit{testPort, clientRegisters, clientStats};
+    IpAddr const ipAddr = {"127.0.0.1", testPort};
+    ModbusClient::Init modbusInit{ipAddr, clientRegisters, clientStats};
     ModbusClient client{modbusInit};
     int count = 0;
     int tick = 0;

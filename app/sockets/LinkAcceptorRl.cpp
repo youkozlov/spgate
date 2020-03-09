@@ -1,12 +1,13 @@
 #include "LinkAcceptorRl.hpp"
 #include "LinkRl.hpp"
+#include "types/IpAddr.hpp"
 
 namespace sg
 {
 
 LinkAcceptorRl::LinkAcceptorRl(Init const& init)
 {
-    listner = std::unique_ptr<Link>(new LinkRl("", init.port, 0));
+    listner = std::unique_ptr<Link>(new LinkRl(init.ipAddr, 0));
 }
 
 LinkAcceptorRl::~LinkAcceptorRl()
