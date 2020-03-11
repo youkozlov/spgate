@@ -1,18 +1,22 @@
 #pragma once
 
+#include <cstring>
+#include "stdio.h"
+
+
 namespace sg
 {
     
 class WrapBuffer
 {
 public:
-    explicit WrapBuffer(uint8_t* p, int l)
+    explicit WrapBuffer(unsigned char* p, int l)
         : ptr(p)
         , len(l)
         , pos(0)
     {}
 
-    uint8_t const* cbegin() const
+    unsigned char const* cbegin() const
     {
         return &ptr[0];
     }
@@ -24,15 +28,15 @@ public:
     
     int readLe()
     {
-        int ll = ptr[pos++];
-        int hh = ptr[pos++];
+        unsigned ll = ptr[pos++];
+        unsigned hh = ptr[pos++];
         return (hh << 8) | ll;
     }
 
     int readBe()
     {
-        int hh = ptr[pos++];
-        int ll = ptr[pos++];
+        unsigned hh = ptr[pos++];
+        unsigned ll = ptr[pos++];
         return (hh << 8) | ll;
     }
     
@@ -47,6 +51,16 @@ public:
         ptr[pos++] = ch;
     }
 
+    void encode(int val)
+    {
+        if (pos + 16 >= len)
+        {
+            return;
+        }
+        sprintf((char*)(&ptr[pos]), "%d", val);
+        pos += strlen((char*)(&ptr[pos]));
+    }
+
     int size() const
     {
         return pos;
@@ -58,7 +72,7 @@ public:
     }
     
 private:
-    uint8_t* ptr;
+    unsigned char* ptr;
     int len;
     int pos;
 };

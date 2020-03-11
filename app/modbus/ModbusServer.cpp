@@ -1,6 +1,6 @@
 #include "ModbusServer.hpp"
 
-#include "interfaces/Link.hpp"
+#include "sockets/LinkRl.hpp"
 #include "interfaces/LinkAcceptor.hpp"
 
 #include "utils/Utils.hpp"
@@ -11,7 +11,7 @@
 
 namespace sg
 {
-    
+
 ModbusServer::ModbusServer(Init const& init)
     : state(ModbusServerState::init)
     , regs(init.regs)
@@ -19,7 +19,7 @@ ModbusServer::ModbusServer(Init const& init)
     , stats(init.stats)
     , tick(0)
 {
-    rawBuffer.resize(rxBufferSize);
+    link = std::unique_ptr<LinkRl>(new LinkRl(-1));
 }
 
 ModbusServer::~ModbusServer()
@@ -46,7 +46,9 @@ void ModbusServer::tickInd()
         processError();
     break;
     }
+
     tick += 1;
+
     if (tick % 4096 == 0)
     {
         printStats();
@@ -68,19 +70,18 @@ void ModbusServer::processIdle()
 
 void ModbusServer::processConnect()
 {
-    client = acceptor.accept();
-    if (!client)
+    int fd = acceptor.accept();
+    if (fd < 0)
     {
-        chageState(ModbusServerState::error);
         return;
     }
-    
+    link->setHandl(fd);
     chageState(ModbusServerState::run);
 }
 
 void ModbusServer::processRun()
 {
-    int const len = client->read(&rawBuffer[0], mbAduHdrLen, 1000);
+    int const len = link->read(&rawBuffer[0], mbAduHdrLen, 1000);
     if (len == mbAduHdrLen)
     {
         WrapBuffer msgBuf(&rawBuffer[0], rawBuffer.size());
@@ -88,7 +89,9 @@ void ModbusServer::processRun()
 
         uint16_t const tail = adu.pktLen - 2;
 
-        if (client->read(&rawBuffer[mbAduHdrLen], tail, 1000) == tail)
+        bool isValid = adu.pktLen > 2 && adu.pktLen < 256 && adu.protocolId == 0;
+
+        if (isValid && link->read(&rawBuffer[mbAduHdrLen], tail, 1000) == tail)
         {
             stats.nRx += 1;
             if (!processAdu(adu, msgBuf))
@@ -114,8 +117,8 @@ void ModbusServer::processRun()
 
 bool ModbusServer::sendRespond(WrapBuffer const& msgBuf)
 {
-    stats.nTx += 1;   
-    int txLen = client->write(msgBuf.cbegin(), msgBuf.size());
+    stats.nTx += 1;
+    int txLen = link->write(msgBuf.cbegin(), msgBuf.size());
     if (txLen != msgBuf.size())
     {
         LM(LE, "Sended bytes less than expected: txLen=%d msgBuf=%d", txLen, msgBuf.size());
@@ -128,7 +131,7 @@ void ModbusServer::processError()
 {
     if (tick % 1024 == 0)
     {
-        client.reset();
+        link->close();
         chageState(ModbusServerState::idle);
     }
 }

@@ -12,7 +12,6 @@ struct ParamParams;
 
 struct GateReadItem
 {
-    GateParams const&   gate;
     DeviceParams const& device;
     ParamParams const&  prms;
 };

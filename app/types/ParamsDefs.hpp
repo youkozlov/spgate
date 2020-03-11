@@ -21,7 +21,6 @@ using ParamAddr = unsigned int;
 struct CommonParams
 {
     IpAddr       modbusAddr;
-    unsigned int readPeriod;
 };
 
 struct GateParams
@@ -30,6 +29,7 @@ struct GateParams
     GateType     gateType;
     IpAddr       gateAddr;
     BusAddr      addr;
+    unsigned int readPeriod;
 };
 
 struct DeviceParams

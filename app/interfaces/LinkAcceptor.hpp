@@ -13,7 +13,7 @@ public:
     
     virtual ~LinkAcceptor() {}
     
-    virtual std::unique_ptr<Link> accept() = 0;
+    virtual int accept() = 0;
 };
 
 }

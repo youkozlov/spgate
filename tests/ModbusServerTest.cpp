@@ -53,7 +53,8 @@ void sendModbusAdu(ModbusRequest const& req, int rep)
     int count = 0;
     int tick = 0;
     int timeout = 50 * rep * 10;
-    while (!done)
+    bool stop = false;
+    while (!stop)
     {        
         tick += 1;
         if (tick % 64 == 0 && client.getState() == ModbusClientState::run)
@@ -62,12 +63,12 @@ void sendModbusAdu(ModbusRequest const& req, int rep)
             count += 1;
             if (count >= rep)
             {
-                done = true;
+                stop = true;
             }
         }
         else if (tick > timeout)
         {
-            done = true;
+            stop = true;
         }
         client.tickInd();
         Utils::nsleep(1000 * 1000 * 2);
@@ -79,7 +80,9 @@ void sendModbusRequest(ModbusRequest const& req, int rep)
     done = false;
     std::thread thr1(server);
     sendModbusAdu(req, rep);
-    thr1.join();    
+    sendModbusAdu(req, rep);
+    done = true;
+    thr1.join();
 }
 
 //TEST(ModbusServerTest, OnlyServer)
@@ -176,5 +179,5 @@ TEST(ModbusServerTest, ErrorCase)
     req = {1, 0x4, 1, 32000};
     sendModbusRequest(req, 5);
 
-    EXPECT_EQ(10, serverStats.nError);
+    EXPECT_EQ(20, serverStats.nError);
 }

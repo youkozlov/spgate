@@ -1,29 +1,28 @@
 #include "LinkAcceptorRl.hpp"
-#include "LinkRl.hpp"
 #include "types/IpAddr.hpp"
+
+#include <sys/socket.h>
 
 namespace sg
 {
 
 LinkAcceptorRl::LinkAcceptorRl(Init const& init)
+    : listner(init.ipAddr, 3)
 {
-    listner = std::unique_ptr<Link>(new LinkRl(init.ipAddr, 0));
+    listner.connect();
 }
 
 LinkAcceptorRl::~LinkAcceptorRl()
 {
 }
 
-std::unique_ptr<Link> LinkAcceptorRl::accept()
+int LinkAcceptorRl::accept()
 {
-    int fd = listner->connect();
-
-    if (fd < 0)
+    if (listner.select(acceptTimeout))
     {
-        return nullptr;
+        return ::accept(listner.getHandl(), NULL, NULL);
     }
-
-    return std::unique_ptr<Link>(new LinkRl(fd));
+    return -2;
 }
 
 }

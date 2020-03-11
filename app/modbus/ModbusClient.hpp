@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
+#include <array>
 #include <memory>
 
 #include "types/IpAddr.hpp"
@@ -60,7 +60,7 @@ private:
     bool processReadRsp(ModbusTcpAdu const&, WrapBuffer&);
     bool processWriteCmd(ModbusTcpAdu const&, WrapBuffer&);
     bool processMultiWriteCmd(ModbusTcpAdu const&, WrapBuffer&);
- 
+
     ModbusClientState state;
     std::unique_ptr<Link> link;
 
@@ -68,7 +68,7 @@ private:
     ModbusBuffer& regs;
     ModbusStats& stats;
     
-    std::vector<uint8_t> rawBuffer;
+    std::array<unsigned char, rxBufferSize> rawBuffer;
     uint64_t tick;
     ModbusTcpAdu storedAdu;
 };

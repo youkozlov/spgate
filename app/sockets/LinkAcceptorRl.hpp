@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "interfaces/LinkAcceptor.hpp"
+#include "sockets/LinkRl.hpp"
 
 namespace sg
 {
@@ -22,9 +23,11 @@ public:
     
     ~LinkAcceptorRl();
     
-    std::unique_ptr<Link> accept() final;
+    int accept() final;
     
 private:
-    std::unique_ptr<Link> listner;
+
+    static constexpr int acceptTimeout = 300;
+    LinkRl listner;
 };
 }

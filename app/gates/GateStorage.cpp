@@ -29,7 +29,7 @@ bool GateStorage::configure(GateParams const& gateParams)
             continue;
         }
 
-        GateReadItem item{gateParams, device, param};
+        GateReadItem item{device, param};
 
         items.push_back(item);
     }

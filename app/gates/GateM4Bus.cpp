@@ -1,5 +1,6 @@
 #include "GateM4Bus.hpp"
 #include "types/ParamsDefs.hpp"
+#include "utils/WrapBuffer.hpp"
 
 namespace sg
 {
@@ -23,16 +24,28 @@ void GateM4Bus::tickInd()
 {
 }
 
-
-bool GateM4Bus::request(DataRequest const&)
+int GateM4Bus::connect()
 {
-    return true;
+    return 0;
 }
-    
-DataRespond GateM4Bus::respond()
+
+int GateM4Bus::send()
 {
-    DataRespond rsp;
-    return rsp;
+    return 0;
+}
+
+int GateM4Bus::receive()
+{
+    return 0;
+}
+
+unsigned int GateM4Bus::period()
+{
+    return gateParams.readPeriod;
+}
+
+void GateM4Bus::reset()
+{
 }
 
 }

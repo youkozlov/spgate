@@ -1,5 +1,7 @@
 #include "gtest/gtest.h"
 #include "SpGate.hpp"
+#include "utils/Utils.hpp"
+
 
 using namespace sg;
 
@@ -7,6 +9,13 @@ TEST(SpGateTest, Init)
 {
     SpGate::Init spgInit{"../cfg/default.ini"};
     SpGate spgate(spgInit);
+    /*
+    while (1)
+    {
+        spgate.tickInd();
+        Utils::nsleep();
+    }
+    */
 }
 
 

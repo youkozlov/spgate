@@ -18,7 +18,7 @@ ModbusClient::ModbusClient(Init const& init)
     , stats(init.stats)
     , tick(0)
 {
-    rawBuffer.resize(rxBufferSize);
+    link = std::unique_ptr<Link>(new LinkRl(init.ipAddr));
 }
 
 ModbusClient::~ModbusClient()
@@ -103,7 +103,6 @@ void ModbusClient::processIdle()
 
 void ModbusClient::processConnect()
 {
-    link = std::unique_ptr<Link>(new LinkRl(ipAddr));
     if (link->connect() < 0)
     {
         chageState(ModbusClientState::error);
@@ -150,7 +149,7 @@ void ModbusClient::processError()
 {
     if (tick % 1024 == 0)
     {
-        link.reset();
+        link->close();
         chageState(ModbusClientState::idle);
     }
 }

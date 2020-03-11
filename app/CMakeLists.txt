@@ -9,6 +9,7 @@ add_library(app
     sockets/LinkAcceptorRl.cpp
     modbus/ModbusServer.cpp
     modbus/ModbusClient.cpp
+    gates/GateFsm.cpp
     gates/GateStorage.cpp
     gates/GateSpBus.cpp
     gates/GateM4Bus.cpp

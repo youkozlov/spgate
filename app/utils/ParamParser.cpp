@@ -196,11 +196,6 @@ void ParamParser::parseCommon(rlIniFile& parser)
     {
         return parseValue(common.modbusAddr, str);
     });
-    
-    parseName(parser, "common", "read_period", mandatory, [this](const char* str)
-    {
-        return parseValue(common.readPeriod, str);
-    });
 }
 
 bool ParamParser::parseGates(rlIniFile& parser, char const* gateName)
@@ -232,7 +227,12 @@ bool ParamParser::parseGates(rlIniFile& parser, char const* gateName)
 
     parseName(parser, gateName, "addr", nameType, [&prms](const char* str)
     {
-        return parseValue(prms.addr, str);
+        return parseValue(prms.addr, str, 16);
+    });
+
+    parseName(parser, gateName, "read_period", mandatory, [&prms](const char* str)
+    {
+        return parseValue(prms.readPeriod, str);
     });
 
     gates.push_back(prms);
@@ -262,7 +262,7 @@ bool ParamParser::parseDevices(rlIniFile& parser, char const* deviceName)
 
     parseName(parser, deviceName, "addr", mandatory, [&prms](const char* str)
     {
-        return parseValue(prms.addr, str);
+        return parseValue(prms.addr, str, 16);
     });
 
     devices.push_back(prms);
@@ -302,7 +302,7 @@ bool ParamParser::parseParams(rlIniFile& parser, char const* paramName)
 
     parseName(parser, paramName, "addr", mandatory, [&prms](const char* str)
     {
-        return parseValue(prms.addr, str);
+        return parseValue(prms.addr, str, 16);
     });
 
     params.push_back(prms);

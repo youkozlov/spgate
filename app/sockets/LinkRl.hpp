@@ -39,11 +39,26 @@ public:
         return socket.connect();
     }
 
+    void close() final
+    {
+        socket.disconnect();
+    }
+
     int select(int timeout) final
     {
         return socket.select(timeout);
     }
     
+    void setHandl(int fd) final
+    {
+        socket.s = fd;
+    }
+
+    int getHandl() const
+    {
+        return socket.s;
+    }
+
     LinkRl(LinkRl const&) = delete;
     void operator=(LinkRl const&) = delete;
 

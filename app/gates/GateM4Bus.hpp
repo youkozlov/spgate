@@ -29,6 +29,16 @@ public:
 
     void tickInd() final;
 
+    int connect() final;
+
+    int send() final;
+
+    int receive() final;
+
+    unsigned int period() final;
+
+    void reset() final;
+
 private:
     bool request(DataRequest const&);
     DataRespond respond();

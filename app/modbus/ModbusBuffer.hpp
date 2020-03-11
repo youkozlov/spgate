@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include <array>
 
 namespace sg
 {
@@ -8,11 +8,7 @@ namespace sg
 class ModbusBuffer
 {
 public:
-    explicit ModbusBuffer(int c = 1024 * 16)
-        : capacity(c)
-    {
-        buf.resize(capacity);
-    }
+    ModbusBuffer() = default;
 
     void reset()
     {
@@ -38,8 +34,8 @@ public:
     void operator=(ModbusBuffer const&) = delete;
     
 private:
-    const int capacity;
-    std::vector<uint16_t> buf;
+    static constexpr int capacity = 1024 * 16;
+    std::array<uint16_t, capacity> buf;
 };
 
 }

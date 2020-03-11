@@ -30,7 +30,7 @@ public:
     {
         ModbusBuffer& regs;
         LinkAcceptor& acceptor;
-        ModbusStats& stats;
+        ModbusStats&  stats;
     };
     explicit ModbusServer(Init const&);
     
@@ -57,14 +57,14 @@ private:
     bool sendError(int, ModbusTcpAdu const&, WrapBuffer&);
     bool sendRespond(WrapBuffer const&);
 
-    ModbusServerState state;
-    std::unique_ptr<Link> client;
+    ModbusServerState     state;
+    std::unique_ptr<Link> link;
 
     ModbusBuffer& regs;
     LinkAcceptor& acceptor;
-    ModbusStats& stats;
+    ModbusStats&  stats;
     
-    std::vector<uint8_t> rawBuffer;
+    std::array<unsigned char, rxBufferSize> rawBuffer;
     uint64_t tick;
 };
 

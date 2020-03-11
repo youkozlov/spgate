@@ -1,7 +1,7 @@
 #include "GateSpBus.hpp"
-#include "DataRequest.hpp"
 #include "sockets/LinkRl.hpp"
 #include "types/ParamsDefs.hpp"
+#include "utils/WrapBuffer.hpp"
 
 namespace sg
 {
@@ -18,7 +18,7 @@ const char ETX = 0x03;
 const char HT  = 0x09;
 const char FF  = 0x0C;
 
-int CRCode(char *msg, int len)
+int CRCode(unsigned char const* msg, int len)
 {
     int crc = 0;
     while (len-- > 0)
@@ -44,8 +44,10 @@ GateSpBus::GateSpBus(Init const& init)
     : gateParams(init.gateParams)
     , storage(init.parser)
     , regs(init.regs)
+    , fsm(*this)
+    , currentParamId(0)
 {
-    link = std::unique_ptr<LinkRl>(new LinkRl(gateParams.gateAddr));
+    link = std::unique_ptr<Link>(new LinkRl(gateParams.gateAddr));
 }
 
 GateSpBus::~GateSpBus()
@@ -59,47 +61,64 @@ bool GateSpBus::configure()
 
 void GateSpBus::tickInd()
 {
+    fsm.tickInd();
 }
 
-bool GateSpBus::request(DataRequest const& req)
+int GateSpBus::connect()
 {
-    buf.reset();
+    return link->connect();
+}
+
+int GateSpBus::send()
+{
+    WrapBuffer buf(&rawBuffer[0], rawBuffer.size());
+
+    auto& item   = storage.getItem((currentParamId++) % storage.getNumItems());
+    auto& device = item.device;
+    auto& prms   = item.prms;
 
 //  HEAD
-    buf.addByte(DLE);
-    buf.addByte(SOH);
-    buf.addByte(req.dad);
-    buf.addByte(req.sad);
-    buf.addByte(DLE);
-    buf.addByte(ISI);
-    buf.addByte(RDP);
-    buf.addByte(DLE);
-    buf.addByte(STX);
+    buf.write(DLE);
+    buf.write(SOH);
+    buf.write(device.addr);
+    buf.write(gateParams.addr);
+    buf.write(DLE);
+    buf.write(ISI);
+    buf.write(prms.func);
+    buf.write(DLE);
+    buf.write(STX);
 //  --
 
-    buf.addByte(HT);
-    buf.encode(req.chanId);
-    buf.addByte(HT);
-    buf.encode(req.paramId);
-    buf.addByte(FF);
+    buf.write(HT);
+    buf.encode(prms.chan);
+    buf.write(HT);
+    buf.encode(prms.addr);
+    buf.write(FF);
 
 //  TILE
-    buf.addByte(DLE);
-    buf.addByte(ETX);
-    int crc = CRCode(buf.get(2), buf.size() - 2);
-    buf.addByte(crc >> 8);
-    buf.addByte(crc);
+    buf.write(DLE);
+    buf.write(ETX);
+    int crc = CRCode(buf.cbegin() + 2, buf.size() - 2);
+    buf.write(crc >> 8);
+    buf.write(crc);
 //  --
-    
-    link->write(buf.get(), buf.size());
-
-    return true;
+    return link->write(buf.cbegin(), buf.size());
 }
 
-DataRespond GateSpBus::respond()
+int GateSpBus::receive()
 {
-    DataRespond rsp;
-    return rsp;
+    return 0;
+}
+
+unsigned int GateSpBus::period()
+{
+    return gateParams.readPeriod;
+}
+
+void GateSpBus::reset()
+{
+    currentParamId = 0;
+    link->close();
 }
 
 }
