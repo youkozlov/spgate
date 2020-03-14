@@ -1,21 +1,52 @@
 #include "gtest/gtest.h"
 #include "SpGate.hpp"
+#include "gates/ServerSpBus.hpp"
 #include "utils/Utils.hpp"
 
+#include "sockets/LinkAcceptorRl.hpp"
+#include "utils/Utils.hpp"
+#include "types/IpAddr.hpp"
+
+#include <thread>
+#include <atomic>
 
 using namespace sg;
 
+static unsigned int testPort = 9999;
+static std::atomic<bool> done;
+
+void serverSpBusTest()
+{
+//    IpAddr const ipAddr = {"192.168.0.193", testPort};
+    IpAddr const ipAddr = {"127.0.0.1", testPort};
+    LinkAcceptorRl::Init acceptInit = {ipAddr};
+    LinkAcceptorRl acceptor(acceptInit);
+    ServerSpBus::Init spbusInit{acceptor};
+    ServerSpBus server{spbusInit};
+    while (!done)
+    {        
+        server.tickInd();
+        Utils::nsleep();
+    }
+}
+
 TEST(SpGateTest, Init)
 {
+    done = false;
+    std::thread thr1(serverSpBusTest);
+
+
     SpGate::Init spgInit{"../cfg/default.ini"};
     SpGate spgate(spgInit);
-    /*
-    while (1)
+    int cnt = 16385;
+    while (cnt--)
     {
         spgate.tickInd();
         Utils::nsleep();
     }
-    */
+
+    done = true;
+    thr1.join();
 }
 
 

@@ -27,7 +27,7 @@ public:
     
 private:
 
-    static constexpr int acceptTimeout = 300;
+    static constexpr int acceptTimeout = 500;
     LinkRl listner;
 };
 }

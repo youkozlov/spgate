@@ -302,7 +302,7 @@ bool ParamParser::parseParams(rlIniFile& parser, char const* paramName)
 
     parseName(parser, paramName, "addr", mandatory, [&prms](const char* str)
     {
-        return parseValue(prms.addr, str, 16);
+        return parseValue(prms.addr, str);
     });
 
     params.push_back(prms);

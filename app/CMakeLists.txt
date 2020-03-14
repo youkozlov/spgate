@@ -13,6 +13,10 @@ add_library(app
     gates/GateStorage.cpp
     gates/GateSpBus.cpp
     gates/GateM4Bus.cpp
+    gates/SpBusCodec.cpp
+    gates/SpBusRx.cpp
+    gates/ServerSpBus.cpp
+    sm/ServerFsm.cpp
     SpGate.cpp
     ) 
     

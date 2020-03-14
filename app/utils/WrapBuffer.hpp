@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstring>
+#include <algorithm>
 #include "stdio.h"
-
 
 namespace sg
 {
@@ -10,7 +10,7 @@ namespace sg
 class WrapBuffer
 {
 public:
-    explicit WrapBuffer(unsigned char* p, int l)
+    explicit WrapBuffer(unsigned char* p, unsigned l)
         : ptr(p)
         , len(l)
         , pos(0)
@@ -19,6 +19,21 @@ public:
     unsigned char const* cbegin() const
     {
         return &ptr[0];
+    }
+
+    unsigned char* begin()
+    {
+        return &ptr[0];
+    }
+
+    bool read(unsigned char& ch)
+    {
+        if (pos < len)
+        {
+            ch = ptr[pos++];
+            return true;
+        }
+        return false;
     }
 
     int read()
@@ -45,25 +60,31 @@ public:
         ptr[pos++] = ch;
     }
 
+    void write(char* buf)
+    {
+        unsigned int length = std::strlen(buf);
+        if (pos + length >= len)
+        {
+            return;
+        }
+        std::copy(buf, buf + length, &ptr[pos]);
+        pos += length;
+    }
+
     void writeBe(int ch)
     {
         ptr[pos++] = ch >> 8;
         ptr[pos++] = ch;
     }
 
-    void encode(int val)
-    {
-        if (pos + 16 >= len)
-        {
-            return;
-        }
-        sprintf((char*)(&ptr[pos]), "%d", val);
-        pos += strlen((char*)(&ptr[pos]));
-    }
-
-    int size() const
+    unsigned size() const
     {
         return pos;
+    }
+
+    unsigned capacity() const
+    {
+        return len;
     }
 
     void reset()
@@ -73,7 +94,7 @@ public:
     
 private:
     unsigned char* ptr;
-    int len;
-    int pos;
+    unsigned len;
+    unsigned pos;
 };
 }

@@ -39,7 +39,7 @@ void validate(ParamParser const& parser)
     EXPECT_EQ(param1.deviceId, 1); 
     EXPECT_EQ(param1.func, 0x1d); 
     EXPECT_EQ(param1.chan, 1); 
-    EXPECT_EQ(param1.addr, 0x67); 
+    EXPECT_EQ(param1.addr, 67); 
     EXPECT_EQ(param1.id, 1);
 }
 

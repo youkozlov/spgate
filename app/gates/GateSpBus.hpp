@@ -11,14 +11,17 @@
 #include "utils/Buffer.hpp"
 #include "GateStorage.hpp"
 #include "GateFsm.hpp"
+#include "SpBusRx.hpp"
 
 namespace sg
 {
- 
+
 class Link;
 class ParamParser;
 class ModbusBuffer;
 struct GateParams;
+struct SpBusFrame;
+struct GateReadItemResult;
 
 class GateSpBus : public Gate
 {
@@ -49,11 +52,19 @@ public:
     void reset() final;
 
 private:
+    
+    GateReadItem const& getNext();
+    GateReadItem const& getCurrent() const;
+    int                 receiveFrame(SpBusFrame&);
+    void                updateModbusRegs(GateReadItemResult const&);
+
     GateParams const&     gateParams;
     GateStorage           storage;
     ModbusBuffer&         regs;
     GateFsm               fsm;
     std::unique_ptr<Link> link;
+    SpBusRx               rx;
+
     std::array<unsigned char, 128> rawBuffer;
     unsigned int          currentParamId;
 };

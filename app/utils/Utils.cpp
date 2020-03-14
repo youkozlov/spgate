@@ -12,4 +12,25 @@ void Utils::nsleep(unsigned long ns)
     nanosleep(&tv, NULL);
 }
 
+int Utils::crcode(unsigned char const* msg, int len)
+{
+    int crc = 0;
+    while (len-- > 0)
+    {
+        crc = crc ^ (int)*msg++ << 8;
+        for (int j = 0; j < 8; ++j)
+        {
+            if (crc & 0x8000)
+            {
+                crc = (crc << 1) ^ 0x1021;
+            }
+            else
+            {
+                crc <<= 1;
+            }
+        }
+    }
+    return crc;
+}
+
 }

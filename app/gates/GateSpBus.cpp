@@ -1,53 +1,27 @@
 #include "GateSpBus.hpp"
 #include "sockets/LinkRl.hpp"
 #include "types/ParamsDefs.hpp"
+#include "modbus/ModbusBuffer.hpp"
+
+#include "GateDefs.hpp"
+#include "SpBusCodec.hpp"
+
 #include "utils/WrapBuffer.hpp"
+#include "utils/Utils.hpp"
+#include "utils/Logger.hpp"
 
 namespace sg
 {
-
-namespace
-{
-
-const char DLE = 0x10;
-const char SOH = 0x01;
-const char ISI = 0x1F;
-const char RDP = 0x1D;
-const char STX = 0x02;
-const char ETX = 0x03;
-const char HT  = 0x09;
-const char FF  = 0x0C;
-
-int CRCode(unsigned char const* msg, int len)
-{
-    int crc = 0;
-    while (len-- > 0)
-    {
-        crc = crc ^ (int)*msg++ << 8;
-        for (int j = 0; j < 8; ++j)
-        {
-            if (crc & 0x8000)
-            {
-                crc = (crc << 1) ^ 0x1021;
-            }
-            else
-            {
-                crc <<= 1;
-            }
-        }
-    }
-    return crc;
-}
-}
 
 GateSpBus::GateSpBus(Init const& init)
     : gateParams(init.gateParams)
     , storage(init.parser)
     , regs(init.regs)
     , fsm(*this)
+    , link(std::unique_ptr<Link>(new LinkRl(gateParams.gateAddr)))
+    , rx(*link)
     , currentParamId(0)
 {
-    link = std::unique_ptr<Link>(new LinkRl(gateParams.gateAddr));
 }
 
 GateSpBus::~GateSpBus()
@@ -71,43 +45,110 @@ int GateSpBus::connect()
 
 int GateSpBus::send()
 {
-    WrapBuffer buf(&rawBuffer[0], rawBuffer.size());
-
-    auto& item   = storage.getItem((currentParamId++) % storage.getNumItems());
+    auto& item   = getNext();
     auto& device = item.device;
     auto& prms   = item.prms;
 
-//  HEAD
-    buf.write(DLE);
-    buf.write(SOH);
-    buf.write(device.addr);
-    buf.write(gateParams.addr);
-    buf.write(DLE);
-    buf.write(ISI);
-    buf.write(prms.func);
-    buf.write(DLE);
-    buf.write(STX);
-//  --
+    SpBusFrame frame{};
 
-    buf.write(HT);
-    buf.encode(prms.chan);
-    buf.write(HT);
-    buf.encode(prms.addr);
-    buf.write(FF);
+    frame.hdr.dad = device.addr;
+    frame.hdr.sad = gateParams.addr;
+    frame.hdr.fc  = prms.func;
 
-//  TILE
-    buf.write(DLE);
-    buf.write(ETX);
-    int crc = CRCode(buf.cbegin() + 2, buf.size() - 2);
-    buf.write(crc >> 8);
-    buf.write(crc);
-//  --
-    return link->write(buf.cbegin(), buf.size());
+    frame.data.numPointers = 1;
+    auto& ptr = frame.data.pointers[0];
+    sprintf(ptr.chan.param, "%u", prms.chan);
+    sprintf(ptr.prm.param, "%u", prms.addr);
+
+    WrapBuffer txBuf(&rawBuffer[0], rawBuffer.size());
+
+    SpBusCodec codec(txBuf, frame);
+    if (!codec.encode())
+    {
+        return 1;
+    }
+
+    return link->write(txBuf.cbegin(), txBuf.size());
+}
+
+int GateSpBus::receiveFrame(SpBusFrame& frame)
+{
+    int len = rx.receive(&rawBuffer[0], rawBuffer.size());
+    
+    if (!len)
+    {
+        return 0;
+    }
+    else if (len < 0)
+    {
+        return len;
+    }
+
+    WrapBuffer rxBuf(&rawBuffer[0], len);
+
+    if (Utils::crcode(rxBuf.cbegin() + 2, len - 2))
+    {
+        LM(LE, "CRC NOK");
+        return -1;
+    }
+
+    SpBusCodec codec(rxBuf, frame);
+
+    if (!codec.decode())
+    {
+        return -1;
+    }
+
+    if (frame.hdr.fc != RSP)
+    {
+        LM(LE, "Unexpected function=%02X", frame.hdr.fc);
+        return -1;
+    }
+
+    return len;
 }
 
 int GateSpBus::receive()
 {
-    return 0;
+    GateReadItemResult result{};
+
+    SpBusFrame frame{};
+
+    int len = receiveFrame(frame);
+
+    if (!len)
+    {
+        return len;
+    }
+    else if (len < 0)
+    {
+        result.st = GateReadItemResult::timeout;
+    }
+    else if (!frame.data.numInfos)
+    {
+        result.st = GateReadItemResult::invalid;
+    }
+    else if (sscanf(frame.data.infos[0].value.param, "%lf", &result.value) != 1)
+    {
+        result.st = GateReadItemResult::invalid;
+    }
+    else
+    {
+        result.st = GateReadItemResult::ready;
+    }
+
+    updateModbusRegs(result);
+
+    return len;
+}
+
+void GateSpBus::updateModbusRegs(GateReadItemResult const& result)
+{
+    auto& item = getCurrent();
+    auto& prms   = item.prms;
+
+    auto& valReg = regs[prms.id * 8];
+    memcpy(&valReg, &result.value, sizeof(result.value));
 }
 
 unsigned int GateSpBus::period()
@@ -119,6 +160,16 @@ void GateSpBus::reset()
 {
     currentParamId = 0;
     link->close();
+}
+
+GateReadItem const& GateSpBus::getNext()
+{
+    return storage.getItem((++currentParamId) % storage.getNumItems());
+}
+
+GateReadItem const& GateSpBus::getCurrent() const
+{
+    return storage.getItem(currentParamId % storage.getNumItems());
 }
 
 }

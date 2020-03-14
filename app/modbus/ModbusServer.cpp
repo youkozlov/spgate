@@ -118,7 +118,7 @@ void ModbusServer::processRun()
 bool ModbusServer::sendRespond(WrapBuffer const& msgBuf)
 {
     stats.nTx += 1;
-    int txLen = link->write(msgBuf.cbegin(), msgBuf.size());
+    unsigned int txLen = link->write(msgBuf.cbegin(), msgBuf.size());
     if (txLen != msgBuf.size())
     {
         LM(LE, "Sended bytes less than expected: txLen=%d msgBuf=%d", txLen, msgBuf.size());

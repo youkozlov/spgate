@@ -20,12 +20,12 @@ public:
         return capacity;
     }
 
-    uint16_t operator[](int i) const
+    uint16_t operator[](unsigned int i) const
     {
         return buf[i];
     }
 
-    uint16_t& operator[](int i)
+    uint16_t& operator[](unsigned int i)
     {
         return buf[i];
     }
