@@ -6,6 +6,7 @@
 #include "sm/Server.hpp"
 #include "sm/ServerFsm.hpp"
 #include "SpBusRx.hpp"
+#include "Buffer.hpp"
 
 namespace sg
 {
@@ -18,7 +19,8 @@ class SpBusServer : public Server
 public:
     struct Init
     {
-        LinkAcceptor& acceptor;
+        Buffer<float>& buffer;
+        LinkAcceptor&  acceptor;
     };
 
     explicit SpBusServer(Init const&);
@@ -38,6 +40,7 @@ public:
 private:
 
     ServerFsm                       fsm;
+    Buffer<float>&                  buffer;
     LinkAcceptor&                   acceptor;
     std::unique_ptr<Link>           link;
     SpBusRx                         rx;

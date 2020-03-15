@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace sg
 {
 class Utils
@@ -15,5 +17,10 @@ public:
     {
         return SIZE;
     }
+
+    static float   reverse(float const);
+
+    static int32_t reverse(int32_t const);
+
 };
 }

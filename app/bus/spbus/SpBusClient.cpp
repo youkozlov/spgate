@@ -13,63 +13,6 @@
 namespace sg
 {
 
-namespace
-{
-
-float Reverse(const float input)
-{
-   float retVal;
-   unsigned char *toConvert   = (unsigned char*) &input;
-   unsigned char *returnValue = (unsigned char*) &retVal;
-
-   returnValue[0] = toConvert[2];
-   returnValue[1] = toConvert[3];
-   returnValue[2] = toConvert[0];
-   returnValue[3] = toConvert[1];
-
-    LM(LD, "ReverseFloat: input=%f, %02X:%02X:%02X:%02X -> %02X:%02X:%02X:%02X"
-        , input
-        , toConvert[0]
-        , toConvert[1]
-        , toConvert[2]
-        , toConvert[3]
-        , returnValue[0]
-        , returnValue[1]
-        , returnValue[2]
-        , returnValue[3]
-        );
-
-   return retVal;
-}
-
-int32_t Reverse(int32_t const input)
-{
-   int32_t retVal;
-   unsigned char *toConvert   = (unsigned char*) &input;
-   unsigned char *returnValue = (unsigned char*) &retVal;
-
-   returnValue[0] = toConvert[2];
-   returnValue[1] = toConvert[3];
-   returnValue[2] = toConvert[0];
-   returnValue[3] = toConvert[1];
-
-    LM(LD, "ReverseFixed: input=%d, %02X:%02X:%02X:%02X -> %02X:%02X:%02X:%02X"
-        , input
-        , toConvert[0]
-        , toConvert[1]
-        , toConvert[2]
-        , toConvert[3]
-        , returnValue[0]
-        , returnValue[1]
-        , returnValue[2]
-        , returnValue[3]
-        );
-
-   return retVal;
-}
-
-}
-
 SpBusClient::SpBusClient(Init const& init)
     : gateParams(init.gateParams)
     , storage(init.parser)
@@ -197,7 +140,7 @@ int SpBusClient::receive()
     {
         valSt = GateReadItemResult::ready;
 
-        float const netFloat = Reverse(floatValue);
+        float const netFloat = Utils::reverse(floatValue);
         memcpy(&valReg, &netFloat, sizeof(netFloat));
     }
     else if (prms.type == ParamType::fixedPoint
@@ -205,7 +148,7 @@ int SpBusClient::receive()
     {
         valSt = GateReadItemResult::ready;
 
-        int32_t const netFixed = Reverse(fixedValue);
+        int32_t const netFixed = Utils::reverse(fixedValue);
         memcpy(&valReg, &netFixed, sizeof(netFixed));
     }
     else

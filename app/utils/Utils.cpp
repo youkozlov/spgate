@@ -1,4 +1,6 @@
 #include "Utils.hpp"
+#include "Logger.hpp"
+
 #include <time.h>
  
 namespace sg
@@ -32,5 +34,58 @@ int Utils::crcode(unsigned char const* msg, int len)
     }
     return crc;
 }
+
+float Utils::reverse(float const input)
+{
+   float retVal;
+   unsigned char *toConvert   = (unsigned char*) &input;
+   unsigned char *returnValue = (unsigned char*) &retVal;
+
+   returnValue[0] = toConvert[2];
+   returnValue[1] = toConvert[3];
+   returnValue[2] = toConvert[0];
+   returnValue[3] = toConvert[1];
+
+    LM(LD, "ReverseFloat: input=%f, %02X:%02X:%02X:%02X -> %02X:%02X:%02X:%02X"
+        , input
+        , toConvert[0]
+        , toConvert[1]
+        , toConvert[2]
+        , toConvert[3]
+        , returnValue[0]
+        , returnValue[1]
+        , returnValue[2]
+        , returnValue[3]
+        );
+
+   return retVal;
+}
+
+int32_t Utils::reverse(int32_t const input)
+{
+   int32_t retVal;
+   unsigned char *toConvert   = (unsigned char*) &input;
+   unsigned char *returnValue = (unsigned char*) &retVal;
+
+   returnValue[0] = toConvert[2];
+   returnValue[1] = toConvert[3];
+   returnValue[2] = toConvert[0];
+   returnValue[3] = toConvert[1];
+
+    LM(LD, "ReverseFixed: input=%d, %02X:%02X:%02X:%02X -> %02X:%02X:%02X:%02X"
+        , input
+        , toConvert[0]
+        , toConvert[1]
+        , toConvert[2]
+        , toConvert[3]
+        , returnValue[0]
+        , returnValue[1]
+        , returnValue[2]
+        , returnValue[3]
+        );
+
+   return retVal;
+}
+
 
 }

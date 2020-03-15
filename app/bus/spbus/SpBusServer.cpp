@@ -18,6 +18,7 @@ namespace sg
 
 SpBusServer::SpBusServer(Init const& init)
     : fsm(*this)
+    , buffer(init.buffer)
     , acceptor(init.acceptor)
     , link(std::unique_ptr<LinkRl>(new LinkRl(-1)))
     , rx(*link)
@@ -89,17 +90,23 @@ int SpBusServer::process()
     frame.hdr.fc = RSP;
     frame.data.numInfos = frame.data.numPointers;
 
-    if (frame.data.numInfos == 1)
+    for (unsigned i = 0; i < frame.data.numPointers; ++i)
     {
-        float valueDouble = (rand() % std::numeric_limits<uint16_t>::max()) / 3.0;
-        if (rand() % 2 == 0)
+        unsigned int chan;
+        if (sscanf(frame.data.pointers[i].chan.param, "%u", &chan) != 1)
         {
-            sprintf(frame.data.infos[0].value.param, "%.5f", valueDouble);
+            LM(LE, "Invalid channel for given pointerId=%u", i);
+            continue;
         }
-        else
+
+        unsigned int addres;
+        if (sscanf(frame.data.pointers[i].prm.param, "%u", &addres) != 1)
         {
-            sprintf(frame.data.infos[0].value.param, "????");
+            LM(LE, "Invalid address for given pointerId=%u", i);
+            continue;
         }
+        unsigned int bufId = chan * 2048 + addres;
+        sprintf(frame.data.infos[i].value.param, "%.5f", buffer[bufId]);
     }
 
     WrapBuffer txBuf(&rawBuffer[0], rawBuffer.size());

@@ -159,6 +159,9 @@ bool ModbusServer::processReadCmd(ModbusTcpAdu const& adu, WrapBuffer& buf)
     
     uint16_t startReg = buf.readBe();
     uint16_t numRegs = buf.readBe();
+
+    LM(LD, "processReadCmd: regs: %u:%u", startReg, numRegs);
+
     uint16_t numBytes = numRegs * 2;
     if (numRegs >= 127)
     {
