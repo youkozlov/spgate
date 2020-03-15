@@ -1,3 +1,3 @@
 # spgate
 
-Application provides opportunity to read parameters SPT(G) devices.
+This is a proxy which provide access to sp(m4)bus devices via tcp modbus protocol.
