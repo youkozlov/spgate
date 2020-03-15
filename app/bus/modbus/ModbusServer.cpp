@@ -13,7 +13,7 @@ namespace sg
 {
 
 ModbusServer::ModbusServer(Init const& init)
-    : state(ModbusServerState::init)
+    : fsm(*this)
     , regs(init.regs)
     , acceptor(init.acceptor)
     , stats(init.stats)
@@ -28,61 +28,37 @@ ModbusServer::~ModbusServer()
 
 void ModbusServer::tickInd()
 {
-    switch (state)
-    {
-    case ModbusServerState::init:
-        processInit();
-    break;
-    case ModbusServerState::idle:
-        processIdle();
-    break;
-    case ModbusServerState::connect:
-        processConnect();
-    break;
-    case ModbusServerState::run:
-        processRun();
-    break;
-    case ModbusServerState::error:
-        processError();
-    break;
-    }
-
-    tick += 1;
-
-    if (tick % 4096 == 0)
-    {
-        printStats();
-    }
+    fsm.tickInd();
 }
 
-void ModbusServer::processInit()
+char const* ModbusServer::name()
 {
-    chageState(ModbusServerState::idle);
+    return "Modbus";
 }
 
-void ModbusServer::processIdle()
-{
-    if (tick % 128 == 0)
-    {
-        chageState(ModbusServerState::connect);
-    }
-}
-
-void ModbusServer::processConnect()
+int ModbusServer::accept()
 {
     int fd = acceptor.accept();
     if (fd < 0)
     {
-        return;
+        return 0;
     }
     link->setHandl(fd);
-    chageState(ModbusServerState::run);
+    return 1;
 }
 
-void ModbusServer::processRun()
+int ModbusServer::process()
 {
     int const len = link->read(&rawBuffer[0], mbAduHdrLen, 50);
-    if (len == mbAduHdrLen)
+    if (!len)
+    {
+        return len;
+    }
+    else if (len < 0)
+    {
+        return len;
+    }
+    else if (len == mbAduHdrLen)
     {
         WrapBuffer msgBuf(&rawBuffer[0], rawBuffer.size());
         ModbusTcpAdu const adu = parseAdu(msgBuf);
@@ -91,28 +67,31 @@ void ModbusServer::processRun()
 
         bool isValid = adu.pktLen > 2 && adu.pktLen < 256 && adu.protocolId == 0;
 
-        if (isValid && link->read(&rawBuffer[mbAduHdrLen], tail, 1000) == tail)
+        if (isValid && link->read(&rawBuffer[mbAduHdrLen], tail, 50) == tail)
         {
             stats.nRx += 1;
             if (!processAdu(adu, msgBuf))
             {
-                return;
+                return -1;
             }
-            sendRespond(msgBuf);
+            return sendRespond(msgBuf) == false;
         }
         else
         {
             stats.nInvalid += 1;
+            return -1;
         }
     }
-    else if (len < 0)
-    {
-        chageState(ModbusServerState::error);
-    }
-    else if (len) 
+    else
     {
         LM(LE, "Received packet with invalid: len=%d", len);
     }
+    return -1;
+}
+
+void ModbusServer::reset()
+{
+    link->close();
 }
 
 bool ModbusServer::sendRespond(WrapBuffer const& msgBuf)
@@ -125,15 +104,6 @@ bool ModbusServer::sendRespond(WrapBuffer const& msgBuf)
         return false;
     }
     return true;
-}
-
-void ModbusServer::processError()
-{
-    if (tick % 1024 == 0)
-    {
-        link->close();
-        chageState(ModbusServerState::idle);
-    }
 }
 
 void ModbusServer::printStats()
@@ -276,31 +246,6 @@ bool ModbusServer::sendError(int err, ModbusTcpAdu const& adu, WrapBuffer& buf)
     buf.write(MB_ERR);
     buf.write(err);
     return true;
-}
-
-void ModbusServer::chageState(ModbusServerState newSt)
-{
-    LM(LI, "Change state: %s -> %s", toString(state), toString(newSt));
-    state = newSt;
-}
-
-char const* ModbusServer::toString(ModbusServerState st) const
-{
-    switch (st)
-    {
-    case ModbusServerState::init:
-        return "Init";
-    case ModbusServerState::idle:
-        return "Idle";
-    case ModbusServerState::connect:
-        return "Connect";
-    case ModbusServerState::run:
-        return "Run";
-    case ModbusServerState::error:
-        return "Error";
-    default:
-        return "Invalid";
-    }
 }
 
 }

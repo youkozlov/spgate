@@ -38,7 +38,7 @@ TEST(BusGateTest, Init)
 
     BusGate::Init spgInit{"../cfg/default.ini"};
     BusGate spgate(spgInit);
-    int cnt = 65535 * 8;
+    int cnt = 4096;
     while (cnt--)
     {
         spgate.tickInd();

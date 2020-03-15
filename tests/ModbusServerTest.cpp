@@ -80,7 +80,6 @@ void sendModbusRequest(ModbusRequest const& req, int rep)
     done = false;
     std::thread thr1(server);
     sendModbusAdu(req, rep);
-    sendModbusAdu(req, rep);
     done = true;
     thr1.join();
 }
@@ -179,5 +178,5 @@ TEST(ModbusServerTest, ErrorCase)
     req = {1, 0x4, 1, 32000};
     sendModbusRequest(req, 5);
 
-    EXPECT_EQ(20, serverStats.nError);
+    EXPECT_EQ(10, serverStats.nError);
 }

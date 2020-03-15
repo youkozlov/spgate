@@ -4,26 +4,20 @@
 #include <vector>
 #include <memory>
 
+#include "sm/Server.hpp"
+#include "sm/ServerFsm.hpp"
+
 #include "ModbusDefs.hpp"
 
 namespace sg
 {
-
-enum class ModbusServerState
-{
-    init,
-    idle,
-    connect,
-    run,
-    error
-};
 
 class WrapBuffer;
 class ModbusBuffer;
 class Link;
 class LinkAcceptor;
 
-class ModbusServer
+class ModbusServer : public Server
 {
 public:
     struct Init
@@ -37,17 +31,18 @@ public:
     ~ModbusServer();
     
     void tickInd();
-    
+
+    char const* name() final;
+
+    int accept() final;
+
+    int process() final;
+
+    void reset() final;
+
 private:
 
-    void processInit();
-    void processIdle();
-    void processConnect();
-    void processRun();
-    void processError();
     void printStats();
-    void chageState(ModbusServerState);
-    char const* toString(ModbusServerState) const;
 
     ModbusTcpAdu parseAdu(WrapBuffer&);
     bool processAdu(ModbusTcpAdu const&, WrapBuffer&);
@@ -57,12 +52,11 @@ private:
     bool sendError(int, ModbusTcpAdu const&, WrapBuffer&);
     bool sendRespond(WrapBuffer const&);
 
-    ModbusServerState     state;
+    ServerFsm             fsm;
     std::unique_ptr<Link> link;
-
-    ModbusBuffer& regs;
-    LinkAcceptor& acceptor;
-    ModbusStats&  stats;
+    ModbusBuffer&         regs;
+    LinkAcceptor&         acceptor;
+    ModbusStats&          stats;
     
     std::array<unsigned char, rxBufferSize> rawBuffer;
     uint64_t tick;
