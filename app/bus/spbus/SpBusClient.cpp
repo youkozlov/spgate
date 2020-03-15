@@ -3,7 +3,6 @@
 #include "types/ParamsDefs.hpp"
 #include "modbus/ModbusBuffer.hpp"
 
-#include "GateDefs.hpp"
 #include "SpBusDefs.hpp"
 #include "SpBusCodec.hpp"
 
@@ -17,17 +16,54 @@ namespace sg
 namespace
 {
 
-float ReverseFloat( const float inFloat )
+float Reverse(const float input)
 {
    float retVal;
-   char *floatToConvert = (char*) &inFloat;
-   char *returnFloat    = (char*) &retVal;
+   unsigned char *toConvert   = (unsigned char*) &input;
+   unsigned char *returnValue = (unsigned char*) &retVal;
 
-   // swap the bytes into a temporary buffer
-   returnFloat[0] = floatToConvert[3];
-   returnFloat[1] = floatToConvert[2];
-   returnFloat[2] = floatToConvert[1];
-   returnFloat[3] = floatToConvert[0];
+   returnValue[0] = toConvert[2];
+   returnValue[1] = toConvert[3];
+   returnValue[2] = toConvert[0];
+   returnValue[3] = toConvert[1];
+
+    LM(LD, "ReverseFloat: input=%f, %02X:%02X:%02X:%02X -> %02X:%02X:%02X:%02X"
+        , input
+        , toConvert[0]
+        , toConvert[1]
+        , toConvert[2]
+        , toConvert[3]
+        , returnValue[0]
+        , returnValue[1]
+        , returnValue[2]
+        , returnValue[3]
+        );
+
+   return retVal;
+}
+
+int32_t Reverse(int32_t const input)
+{
+   int32_t retVal;
+   unsigned char *toConvert   = (unsigned char*) &input;
+   unsigned char *returnValue = (unsigned char*) &retVal;
+
+   returnValue[0] = toConvert[2];
+   returnValue[1] = toConvert[3];
+   returnValue[2] = toConvert[0];
+   returnValue[3] = toConvert[1];
+
+    LM(LD, "ReverseFixed: input=%d, %02X:%02X:%02X:%02X -> %02X:%02X:%02X:%02X"
+        , input
+        , toConvert[0]
+        , toConvert[1]
+        , toConvert[2]
+        , toConvert[3]
+        , returnValue[0]
+        , returnValue[1]
+        , returnValue[2]
+        , returnValue[3]
+        );
 
    return retVal;
 }
@@ -130,7 +166,15 @@ int SpBusClient::receiveFrame(SpBusFrame& frame)
 
 int SpBusClient::receive()
 {
-    GateReadItemResult result{};
+    auto& currentParam = getCurrent();
+    auto& prms = currentParam.prms;
+
+    float   floatValue;
+    int32_t fixedValue;
+
+    constexpr int regsPerParam = 4;
+    auto& valReg = regs[prms.id * regsPerParam];
+    auto& valSt  = regs[prms.id * regsPerParam + 2];
 
     SpBusFrame frame{};
 
@@ -142,37 +186,34 @@ int SpBusClient::receive()
     }
     else if (len < 0)
     {
-        result.st = GateReadItemResult::timeout;
+        valSt = GateReadItemResult::timeout;
     }
     else if (!frame.data.numInfos)
     {
-        result.st = GateReadItemResult::invalid;
+        valSt = GateReadItemResult::invalid;
     }
-    else if (sscanf(frame.data.infos[0].value.param, "%f", &result.value) != 1)
+    else if (prms.type == ParamType::floatPoint
+            && sscanf(frame.data.infos[0].value.param, "%f", &floatValue) == 1)
     {
-        result.st = GateReadItemResult::invalid;
+        valSt = GateReadItemResult::ready;
+
+        float const netFloat = Reverse(floatValue);
+        memcpy(&valReg, &netFloat, sizeof(netFloat));
+    }
+    else if (prms.type == ParamType::fixedPoint
+            && sscanf(frame.data.infos[0].value.param, "%d", &fixedValue) == 1)
+    {
+        valSt = GateReadItemResult::ready;
+
+        int32_t const netFixed = Reverse(fixedValue);
+        memcpy(&valReg, &netFixed, sizeof(netFixed));
     }
     else
     {
-        result.st = GateReadItemResult::ready;
+        valSt = GateReadItemResult::invalid;
     }
-
-    updateModbusRegs(result);
 
     return len;
-}
-
-void SpBusClient::updateModbusRegs(GateReadItemResult const& result)
-{
-    auto& item = getCurrent();
-    auto& prms = item.prms;
-    regs[prms.id * 4 + 2] = result.st;
-    if (result.st == GateReadItemResult::ready)
-    {
-        auto& valReg = regs[prms.id * 4];
-        float const nfloat = ReverseFloat(result.value);
-        memcpy(&valReg, &nfloat, sizeof(nfloat));
-    }
 }
 
 unsigned int SpBusClient::period()

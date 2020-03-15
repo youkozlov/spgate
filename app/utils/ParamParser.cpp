@@ -59,6 +59,24 @@ bool parseValue(GateType& prm, const char* str)
     return true;
 }
 
+bool parseValue(ParamType& prm, const char* str)
+{
+    if (!strcmp(str, "float"))
+    {
+        prm = ParamType::floatPoint;
+    }
+    else if (!strcmp(str, "fixed"))
+    {
+        prm = ParamType::fixedPoint;
+    }
+    else
+    {
+        LM(LE, "Unexpected value: %s, len: %zu", str, strlen(str));
+        return false;
+    }
+    return true;
+}
+
 class rlStringSocket : public rlSocketInterface
 {
 public:
@@ -303,6 +321,11 @@ bool ParamParser::parseParams(rlIniFile& parser, char const* paramName)
     parseName(parser, paramName, "addr", mandatory, [&prms](const char* str)
     {
         return parseValue(prms.addr, str);
+    });
+
+    parseName(parser, paramName, "type", mandatory, [&prms](const char* str)
+    {
+        return parseValue(prms.type, str);
     });
 
     params.push_back(prms);

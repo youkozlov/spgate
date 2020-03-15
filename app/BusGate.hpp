@@ -52,10 +52,11 @@ private:
     bool createGates();
 
     char const*                     iniFileName;
-    BusGateState                     state;
+    BusGateState                    state;
     ParamParser                     parser;
     
     ModbusStats                     modbusStats{};
+
     ModbusBuffer                    modbusRegs;
     std::unique_ptr<LinkAcceptorRl> linkAcceptor;
     std::unique_ptr<ModbusServer>   modbus;

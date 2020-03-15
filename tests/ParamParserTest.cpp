@@ -41,6 +41,7 @@ void validate(ParamParser const& parser)
     EXPECT_EQ(param1.chan, 1); 
     EXPECT_EQ(param1.addr, 67); 
     EXPECT_EQ(param1.id, 1);
+    EXPECT_EQ(param1.type, ParamType::floatPoint);
 }
 
 TEST(ParamParserTest, ParseString)
@@ -74,12 +75,14 @@ device_id=0
 func=1d
 chan=1
 addr=68
+type=fixed
 
 [param1]
 device_id=1
 func=1d
 chan=1
 addr=67
+type=float
 )foo";
 
     ParamParser parser;

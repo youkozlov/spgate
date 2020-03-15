@@ -10,6 +10,17 @@ struct GateParams;
 struct DeviceParams;
 struct ParamParams;
 
+struct GateReadItemResult
+{
+    enum Status
+    {
+        undef,
+        timeout,
+        invalid,
+        ready
+    };
+};
+
 struct GateReadItem
 {
     DeviceParams const& device;

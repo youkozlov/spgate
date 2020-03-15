@@ -81,7 +81,7 @@ void ModbusServer::processConnect()
 
 void ModbusServer::processRun()
 {
-    int const len = link->read(&rawBuffer[0], mbAduHdrLen, 1000);
+    int const len = link->read(&rawBuffer[0], mbAduHdrLen, 50);
     if (len == mbAduHdrLen)
     {
         WrapBuffer msgBuf(&rawBuffer[0], rawBuffer.size());

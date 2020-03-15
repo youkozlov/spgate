@@ -91,8 +91,15 @@ int SpBusServer::process()
 
     if (frame.data.numInfos == 1)
     {
-        double valueDouble = (rand() % std::numeric_limits<int>::max()) / 3.0;
-        sprintf(frame.data.infos[0].value.param, "%.5f", valueDouble);
+        float valueDouble = (rand() % std::numeric_limits<uint16_t>::max()) / 3.0;
+        if (rand() % 2 == 0)
+        {
+            sprintf(frame.data.infos[0].value.param, "%.5f", valueDouble);
+        }
+        else
+        {
+            sprintf(frame.data.infos[0].value.param, "????");
+        }
     }
 
     WrapBuffer txBuf(&rawBuffer[0], rawBuffer.size());

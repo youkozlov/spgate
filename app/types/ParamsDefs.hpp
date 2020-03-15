@@ -39,6 +39,12 @@ struct DeviceParams
     BusAddr      addr;
 };
 
+enum class ParamType
+{
+    floatPoint,
+    fixedPoint
+};
+
 struct ParamParams
 {
     unsigned int id;
@@ -46,6 +52,7 @@ struct ParamParams
     unsigned int func;
     unsigned int chan;
     ParamAddr    addr;
+    ParamType    type;
 };
 
 }

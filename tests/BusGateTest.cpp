@@ -17,8 +17,8 @@ static std::atomic<bool> done;
 
 void SpBusServerTest()
 {
-//    IpAddr const ipAddr = {"192.168.0.193", testPort};
-    IpAddr const ipAddr = {"127.0.0.1", testPort};
+    IpAddr const ipAddr = {"192.168.0.193", testPort};
+//    IpAddr const ipAddr = {"127.0.0.1", testPort};
     LinkAcceptorRl::Init acceptInit = {ipAddr};
     LinkAcceptorRl acceptor(acceptInit);
     SpBusServer::Init spbusInit{acceptor};
@@ -38,7 +38,7 @@ TEST(BusGateTest, Init)
 
     BusGate::Init spgInit{"../cfg/default.ini"};
     BusGate spgate(spgInit);
-    int cnt = 4096;
+    int cnt = 65535 * 8;
     while (cnt--)
     {
         spgate.tickInd();

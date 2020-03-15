@@ -50,7 +50,6 @@ private:
     GateReadItem const& getNext();
     GateReadItem const& getCurrent() const;
     int                 receiveFrame(SpBusFrame&);
-    void                updateModbusRegs(GateReadItemResult const&);
 
     GateParams const&     gateParams;
     GateStorage           storage;

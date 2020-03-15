@@ -8,7 +8,7 @@ namespace sg
 class ModbusBuffer
 {
 public:
-    ModbusBuffer() = default;
+    ModbusBuffer() {}
 
     void reset()
     {
@@ -35,7 +35,7 @@ public:
     
 private:
     static constexpr int capacity = 1024 * 16;
-    std::array<uint16_t, capacity> buf;
+    std::array<uint16_t, capacity> buf{};
 };
 
 }

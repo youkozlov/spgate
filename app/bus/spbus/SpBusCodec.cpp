@@ -22,7 +22,6 @@ bool SpBusCodec::decode()
     subs  = SubState::procPointer;
 
     unsigned char ch;
-
     while (buf.read(ch))
     {
         if (ch == DLE)
@@ -51,11 +50,20 @@ bool SpBusCodec::decode()
         case State::procDataSet:
             procDataSet(ch);
         break;
-        case State::done:
-            return true;
         default:
             LM(LE, "Decode is incompleted");
             return false;
+        }
+
+        // post process
+        switch (state)
+        {
+        case State::done:
+            return true;
+        case State::error:
+            return false;
+        default:
+        break;
         }
     }
 
@@ -81,7 +89,7 @@ void SpBusCodec::procCmd(unsigned char cmd)
     break;
     default:
     {
-        LM(LE, "Unexpected command");
+        LM(LE, "Unexpected command = %02X", cmd);
         changeState(State::error);
     }
     break;
