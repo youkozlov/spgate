@@ -13,17 +13,4 @@ const char ETX = 0x03;
 const char HT  = 0x09;
 const char FF  = 0x0C;
 
-struct GateReadItemResult
-{
-    enum Status
-    {
-        timeout,
-        invalid,
-        ready
-    };
-    double value;
-    Status st;
-};
-
-
 }

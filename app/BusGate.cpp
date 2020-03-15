@@ -1,66 +1,66 @@
-#include "SpGate.hpp"
+#include "BusGate.hpp"
 
 #include "sockets/LinkAcceptorRl.hpp"
 #include "modbus/ModbusServer.hpp"
 
-#include "gates/GateSpBus.hpp"
-#include "gates/GateM4Bus.hpp"
+#include "spbus/SpBusClient.hpp"
+#include "rsbus/RsBusClient.hpp"
 
 #include "utils/Logger.hpp"
 
 namespace sg
 {
 
-SpGate::SpGate(Init const& init)
+BusGate::BusGate(Init const& init)
     : iniFileName(init.iniFileName)
-    , state(SpGateState::init)
+    , state(BusGateState::init)
 {
 }
 
-SpGate::~SpGate()
+BusGate::~BusGate()
 {
 }
 
-void SpGate::tickInd()
+void BusGate::tickInd()
 {
     switch (state)
     {
-    case SpGateState::init:
+    case BusGateState::init:
         processInit();
     return;
-    case SpGateState::run:
+    case BusGateState::run:
         processRun();
     return;
-    case SpGateState::error:
+    case BusGateState::error:
         processError();
     return;
     }
 }
 
-void SpGate::processInit()
+void BusGate::processInit()
 {
     if (!parser.parseFile(iniFileName))
     {
-        chageState(SpGateState::error);
+        chageState(BusGateState::error);
         return;
     }
 
     if (!createModbus())
     {
-        chageState(SpGateState::error);
+        chageState(BusGateState::error);
         return;
     }
 
     if (!createGates())
     {
-        chageState(SpGateState::error);
+        chageState(BusGateState::error);
         return;
     }
 
-    chageState(SpGateState::run);
+    chageState(BusGateState::run);
 }
 
-void SpGate::processRun()
+void BusGate::processRun()
 {
     for (auto& gate : gates)
     {
@@ -70,11 +70,11 @@ void SpGate::processRun()
     modbus->tickInd();
 }
 
-void SpGate::processError()
+void BusGate::processError()
 {
 }
 
-bool SpGate::createModbus()
+bool BusGate::createModbus()
 {
     auto& common = parser.getCommon();
     
@@ -87,7 +87,7 @@ bool SpGate::createModbus()
     return true;
 }
 
-bool SpGate::createGates()
+bool BusGate::createGates()
 {
     if (parser.getNumGates() > maxNumGates || !parser.getNumGates())
     {
@@ -99,23 +99,25 @@ bool SpGate::createGates()
     {
         auto& it = parser.getGate(i);
 
-        switch (it.gateType)
+        try
         {
-        case GateType::sps:
-        {
-            GateSpBus::Init init{it, parser, modbusRegs};
-            gates[i] = std::unique_ptr<Gate>(new GateSpBus(init));
+            switch (it.gateType)
+            {
+            case GateType::sps:
+            {
+                SpBusClient::Init init{it, parser, modbusRegs};
+                gates[i] = std::unique_ptr<Client>(new SpBusClient(init));
+            }
+            break;
+            case GateType::m4:
+            {
+                RsBusClient::Init init{it, parser, modbusRegs};
+                gates[i] = std::unique_ptr<Client>(new RsBusClient(init));
+            }
+            break;
+            }
         }
-        break;
-        case GateType::m4:
-        {
-            GateM4Bus::Init init{it, parser, modbusRegs};
-            gates[i] = std::unique_ptr<Gate>(new GateM4Bus(init));
-        }
-        break;
-        }
-
-        if (!gates[i]->configure())
+        catch(char const*)
         {
             LM(LE, "Can't configure gate=%u", i);
             return false;
@@ -125,26 +127,26 @@ bool SpGate::createGates()
     return true;
 }
 
-void SpGate::chageState(SpGateState newSt)
+void BusGate::chageState(BusGateState newSt)
 {
     LM(LI, "Change state: %s -> %s", toString(state), toString(newSt));
     state = newSt;
 }
 
-SpGateState SpGate::getState() const
+BusGateState BusGate::getState() const
 {
     return state;
 }
 
-char const* SpGate::toString(SpGateState st) const
+char const* BusGate::toString(BusGateState st) const
 {
     switch (st)
     {
-    case SpGateState::init:
+    case BusGateState::init:
         return "Init";
-    case SpGateState::run:
+    case BusGateState::run:
         return "Run";
-    case SpGateState::error:
+    case BusGateState::error:
         return "Error";
     default:
         return "Invalid";

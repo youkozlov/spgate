@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "interfaces/LinkAcceptor.hpp"
-#include "sockets/LinkRl.hpp"
+#include "LinkAcceptor.hpp"
+#include "LinkRl.hpp"
 
 namespace sg
 {

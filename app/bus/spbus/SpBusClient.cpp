@@ -1,9 +1,10 @@
-#include "GateSpBus.hpp"
+#include "SpBusClient.hpp"
 #include "sockets/LinkRl.hpp"
 #include "types/ParamsDefs.hpp"
 #include "modbus/ModbusBuffer.hpp"
 
 #include "GateDefs.hpp"
+#include "SpBusDefs.hpp"
 #include "SpBusCodec.hpp"
 
 #include "utils/WrapBuffer.hpp"
@@ -13,7 +14,27 @@
 namespace sg
 {
 
-GateSpBus::GateSpBus(Init const& init)
+namespace
+{
+
+float ReverseFloat( const float inFloat )
+{
+   float retVal;
+   char *floatToConvert = (char*) &inFloat;
+   char *returnFloat    = (char*) &retVal;
+
+   // swap the bytes into a temporary buffer
+   returnFloat[0] = floatToConvert[3];
+   returnFloat[1] = floatToConvert[2];
+   returnFloat[2] = floatToConvert[1];
+   returnFloat[3] = floatToConvert[0];
+
+   return retVal;
+}
+
+}
+
+SpBusClient::SpBusClient(Init const& init)
     : gateParams(init.gateParams)
     , storage(init.parser)
     , regs(init.regs)
@@ -22,28 +43,27 @@ GateSpBus::GateSpBus(Init const& init)
     , rx(*link)
     , currentParamId(0)
 {
+    if (!storage.configure(gateParams))
+    {
+        throw("Configuration is invalid");
+    }
 }
 
-GateSpBus::~GateSpBus()
+SpBusClient::~SpBusClient()
 {
 }
 
-bool GateSpBus::configure()
-{
-    return storage.configure(gateParams);
-}
-
-void GateSpBus::tickInd()
+void SpBusClient::tickInd()
 {
     fsm.tickInd();
 }
 
-int GateSpBus::connect()
+int SpBusClient::connect()
 {
     return link->connect();
 }
 
-int GateSpBus::send()
+int SpBusClient::send()
 {
     auto& item   = getNext();
     auto& device = item.device;
@@ -71,10 +91,10 @@ int GateSpBus::send()
     return link->write(txBuf.cbegin(), txBuf.size());
 }
 
-int GateSpBus::receiveFrame(SpBusFrame& frame)
+int SpBusClient::receiveFrame(SpBusFrame& frame)
 {
     int len = rx.receive(&rawBuffer[0], rawBuffer.size());
-    
+
     if (!len)
     {
         return 0;
@@ -108,7 +128,7 @@ int GateSpBus::receiveFrame(SpBusFrame& frame)
     return len;
 }
 
-int GateSpBus::receive()
+int SpBusClient::receive()
 {
     GateReadItemResult result{};
 
@@ -128,7 +148,7 @@ int GateSpBus::receive()
     {
         result.st = GateReadItemResult::invalid;
     }
-    else if (sscanf(frame.data.infos[0].value.param, "%lf", &result.value) != 1)
+    else if (sscanf(frame.data.infos[0].value.param, "%f", &result.value) != 1)
     {
         result.st = GateReadItemResult::invalid;
     }
@@ -142,32 +162,36 @@ int GateSpBus::receive()
     return len;
 }
 
-void GateSpBus::updateModbusRegs(GateReadItemResult const& result)
+void SpBusClient::updateModbusRegs(GateReadItemResult const& result)
 {
     auto& item = getCurrent();
-    auto& prms   = item.prms;
-
-    auto& valReg = regs[prms.id * 8];
-    memcpy(&valReg, &result.value, sizeof(result.value));
+    auto& prms = item.prms;
+    regs[prms.id * 4 + 2] = result.st;
+    if (result.st == GateReadItemResult::ready)
+    {
+        auto& valReg = regs[prms.id * 4];
+        float const nfloat = ReverseFloat(result.value);
+        memcpy(&valReg, &nfloat, sizeof(nfloat));
+    }
 }
 
-unsigned int GateSpBus::period()
+unsigned int SpBusClient::period()
 {
     return gateParams.readPeriod;
 }
 
-void GateSpBus::reset()
+void SpBusClient::reset()
 {
     currentParamId = 0;
     link->close();
 }
 
-GateReadItem const& GateSpBus::getNext()
+GateReadItem const& SpBusClient::getNext()
 {
     return storage.getItem((++currentParamId) % storage.getNumItems());
 }
 
-GateReadItem const& GateSpBus::getCurrent() const
+GateReadItem const& SpBusClient::getCurrent() const
 {
     return storage.getItem(currentParamId % storage.getNumItems());
 }

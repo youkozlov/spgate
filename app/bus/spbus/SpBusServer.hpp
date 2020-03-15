@@ -3,7 +3,7 @@
 #include <memory>
 #include <array>
 
-#include "interfaces/Server.hpp"
+#include "sm/Server.hpp"
 #include "sm/ServerFsm.hpp"
 #include "SpBusRx.hpp"
 
@@ -13,7 +13,7 @@ namespace sg
 class Link;
 class LinkAcceptor;
 
-class ServerSpBus : public Server
+class SpBusServer : public Server
 {
 public:
     struct Init
@@ -21,9 +21,9 @@ public:
         LinkAcceptor& acceptor;
     };
 
-    explicit ServerSpBus(Init const&);
+    explicit SpBusServer(Init const&);
 
-    ~ServerSpBus();
+    ~SpBusServer();
 
     void tickInd();
 

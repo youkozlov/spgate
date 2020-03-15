@@ -5,8 +5,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DEBUG -O0 -g -ggdb -Wextra -Wall -Wpeda
 add_definitions( -DGTEST_HAS_PTHREAD=1 )
 
 add_executable(app_ut
-    SpGateTest.cpp
-    GateSpBusTest.cpp
+    BusGateTest.cpp
+    SpBusClientTest.cpp
     ModbusServerTest.cpp
     ParamParserTest.cpp
     )

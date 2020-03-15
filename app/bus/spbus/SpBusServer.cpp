@@ -1,9 +1,10 @@
-#include "ServerSpBus.hpp"
+#include "SpBusServer.hpp"
 
-#include "GateDefs.hpp"
+#include "SpBusDefs.hpp"
 #include "SpBusCodec.hpp"
+
 #include "sockets/LinkRl.hpp"
-#include "interfaces/LinkAcceptor.hpp"
+#include "sockets/LinkAcceptor.hpp"
 
 #include "utils/WrapBuffer.hpp"
 #include "utils/Utils.hpp"
@@ -15,7 +16,7 @@
 namespace sg
 {
 
-ServerSpBus::ServerSpBus(Init const& init)
+SpBusServer::SpBusServer(Init const& init)
     : fsm(*this)
     , acceptor(init.acceptor)
     , link(std::unique_ptr<LinkRl>(new LinkRl(-1)))
@@ -23,21 +24,21 @@ ServerSpBus::ServerSpBus(Init const& init)
 {
 }
 
-ServerSpBus::~ServerSpBus()
+SpBusServer::~SpBusServer()
 {
 }
 
-void ServerSpBus::tickInd()
+void SpBusServer::tickInd()
 {
     fsm.tickInd();
 }
 
-char const* ServerSpBus::name()
+char const* SpBusServer::name()
 {
-    return "ServerSpBus";
+    return "SpBusServer";
 }
 
-int ServerSpBus::accept()
+int SpBusServer::accept()
 {
     int fd = acceptor.accept();
     if (fd < 0)
@@ -48,7 +49,7 @@ int ServerSpBus::accept()
     return 1;
 }
 
-int ServerSpBus::process()
+int SpBusServer::process()
 {
     int len = rx.receive(&rawBuffer[0], rawBuffer.size());
     
@@ -106,7 +107,7 @@ int ServerSpBus::process()
     return link->write(txBuf.cbegin(), txBuf.size()) < 0;
 }
 
-void ServerSpBus::reset()
+void SpBusServer::reset()
 {
     link->close();
 }

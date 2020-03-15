@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types/IpAddr.hpp"
-#include "interfaces/Link.hpp"
+#include "Link.hpp"
 #include "rlsocket.h"
 
 namespace sg

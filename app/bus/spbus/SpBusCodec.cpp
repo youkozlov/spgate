@@ -1,5 +1,5 @@
 #include "SpBusCodec.hpp"
-#include "GateDefs.hpp"
+#include "SpBusDefs.hpp"
 #include "utils/Utils.hpp"
 #include "utils/WrapBuffer.hpp"
 #include "utils/Logger.hpp"

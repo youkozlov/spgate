@@ -1,7 +1,7 @@
 #include "ModbusServer.hpp"
 
 #include "sockets/LinkRl.hpp"
-#include "interfaces/LinkAcceptor.hpp"
+#include "sockets/LinkAcceptor.hpp"
 
 #include "utils/Utils.hpp"
 #include "utils/WrapBuffer.hpp"

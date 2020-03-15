@@ -3,14 +3,10 @@
 #include <memory>
 #include <array>
 
-#include "types/DataRequest.hpp"
-#include "types/DataRespond.hpp"
+#include "sm/Client.hpp"
+#include "sm/ClientFsm.hpp"
 
-#include "interfaces/Gate.hpp"
-
-#include "utils/Buffer.hpp"
 #include "GateStorage.hpp"
-#include "GateFsm.hpp"
 #include "SpBusRx.hpp"
 
 namespace sg
@@ -23,7 +19,7 @@ struct GateParams;
 struct SpBusFrame;
 struct GateReadItemResult;
 
-class GateSpBus : public Gate
+class SpBusClient : public Client
 {
 public:
     struct Init
@@ -33,11 +29,9 @@ public:
         ModbusBuffer&      regs;
     };
 
-    explicit GateSpBus(Init const&);
+    explicit SpBusClient(Init const&);
 
-    ~GateSpBus();
-
-    bool configure() final;
+    ~SpBusClient();
 
     void tickInd() final;
 
@@ -61,12 +55,12 @@ private:
     GateParams const&     gateParams;
     GateStorage           storage;
     ModbusBuffer&         regs;
-    GateFsm               fsm;
+    ClientFsm             fsm;
     std::unique_ptr<Link> link;
     SpBusRx               rx;
 
-    std::array<unsigned char, 128> rawBuffer;
-    unsigned int          currentParamId;
+    std::array<unsigned char, 256> rawBuffer;
+    unsigned int                   currentParamId;
 };
 
 }

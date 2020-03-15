@@ -14,16 +14,16 @@ namespace sg
 class TagAccessor;
 class LinkAcceptorRl;
 class ModbusServer;
-class Gate;
+class Client;
 
-enum class SpGateState
+enum class BusGateState
 {
     init,
     run,
     error
 };
 
-class SpGate
+class BusGate
 {
 public:
     struct Init
@@ -31,13 +31,13 @@ public:
         char const* iniFileName;
     };
     
-    explicit SpGate(Init const&);
+    explicit BusGate(Init const&);
     
-    ~SpGate();
+    ~BusGate();
     
     void tickInd();
 
-    SpGateState getState() const;
+    BusGateState getState() const;
 
 private:
     bool validateTags();
@@ -45,14 +45,14 @@ private:
     void processInit();
     void processRun();
     void processError();
-    void chageState(SpGateState);
-    char const* toString(SpGateState) const;
+    void chageState(BusGateState);
+    char const* toString(BusGateState) const;
 
     bool createModbus();
     bool createGates();
 
     char const*                     iniFileName;
-    SpGateState                     state;
+    BusGateState                     state;
     ParamParser                     parser;
     
     ModbusStats                     modbusStats{};
@@ -60,7 +60,7 @@ private:
     std::unique_ptr<LinkAcceptorRl> linkAcceptor;
     std::unique_ptr<ModbusServer>   modbus;
 
-    std::array<std::unique_ptr<Gate>, maxNumGates> gates;
+    std::array<std::unique_ptr<Client>, maxNumGates> gates;
 };
 
 }

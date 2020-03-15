@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "gates/GateSpBus.hpp"
+#include "spbus/SpBusClient.hpp"
 
 using namespace sg;
 

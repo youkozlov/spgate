@@ -1,8 +1,7 @@
 #include "SpBusRx.hpp"
+#include "SpBusDefs.hpp"
 
-#include "interfaces/Link.hpp"
-
-#include "GateDefs.hpp"
+#include "sockets/Link.hpp"
 #include "utils/Logger.hpp"
 
 namespace sg

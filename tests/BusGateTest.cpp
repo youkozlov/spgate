@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
-#include "SpGate.hpp"
-#include "gates/ServerSpBus.hpp"
+#include "BusGate.hpp"
+#include "spbus/SpBusServer.hpp"
 #include "utils/Utils.hpp"
 
 #include "sockets/LinkAcceptorRl.hpp"
@@ -15,14 +15,14 @@ using namespace sg;
 static unsigned int testPort = 9999;
 static std::atomic<bool> done;
 
-void serverSpBusTest()
+void SpBusServerTest()
 {
 //    IpAddr const ipAddr = {"192.168.0.193", testPort};
     IpAddr const ipAddr = {"127.0.0.1", testPort};
     LinkAcceptorRl::Init acceptInit = {ipAddr};
     LinkAcceptorRl acceptor(acceptInit);
-    ServerSpBus::Init spbusInit{acceptor};
-    ServerSpBus server{spbusInit};
+    SpBusServer::Init spbusInit{acceptor};
+    SpBusServer server{spbusInit};
     while (!done)
     {        
         server.tickInd();
@@ -30,15 +30,15 @@ void serverSpBusTest()
     }
 }
 
-TEST(SpGateTest, Init)
+TEST(BusGateTest, Init)
 {
     done = false;
-    std::thread thr1(serverSpBusTest);
+    std::thread thr1(SpBusServerTest);
 
 
-    SpGate::Init spgInit{"../cfg/default.ini"};
-    SpGate spgate(spgInit);
-    int cnt = 16385;
+    BusGate::Init spgInit{"../cfg/default.ini"};
+    BusGate spgate(spgInit);
+    int cnt = 4096;
     while (cnt--)
     {
         spgate.tickInd();

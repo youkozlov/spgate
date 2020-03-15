@@ -3,12 +3,10 @@
 namespace sg
 {
 
-class Gate
+class Client
 {
 public:
-    virtual ~Gate() {}
-    
-    virtual bool configure() = 0;
+    virtual ~Client() {}
 
     virtual void tickInd() = 0;
 

@@ -1,6 +1,6 @@
 #include "ServerFsm.hpp"
 
-#include "interfaces/Server.hpp"
+#include "Server.hpp"
 #include "utils/Logger.hpp"
 
 namespace sg

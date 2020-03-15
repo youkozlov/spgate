@@ -1,8 +1,6 @@
 #pragma once
 
-#include "interfaces/Gate.hpp"
-#include "types/DataRequest.hpp"
-#include "types/DataRespond.hpp"
+#include "sm/Client.hpp"
 
 namespace sg
 {
@@ -11,7 +9,7 @@ class ParamParser;
 class ModbusBuffer;
 struct GateParams;
 
-class GateM4Bus : public Gate
+class RsBusClient : public Client
 {
 public:
     struct Init
@@ -21,11 +19,9 @@ public:
         ModbusBuffer&      regs;
     };
     
-    explicit GateM4Bus(Init const&);
+    explicit RsBusClient(Init const&);
 
-    ~GateM4Bus();
-
-    bool configure() final;
+    ~RsBusClient();
 
     void tickInd() final;
 
@@ -40,8 +36,6 @@ public:
     void reset() final;
 
 private:
-    bool request(DataRequest const&);
-    DataRespond respond();
 
     GateParams const& gateParams;
     ModbusBuffer&     regs;
