@@ -7,8 +7,6 @@
 #include "utils/WrapBuffer.hpp"
 #include "utils/Logger.hpp"
 
-#include "ModbusBuffer.hpp"
-
 namespace sg
 {
 

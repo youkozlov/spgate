@@ -2,8 +2,8 @@
 
 #include "modbus/ModbusClient.hpp"
 #include "modbus/ModbusServer.hpp"
-#include "modbus/ModbusBuffer.hpp"
 #include "sockets/LinkAcceptorRl.hpp"
+#include "utils/Buffer.hpp"
 #include "utils/Utils.hpp"
 #include "types/IpAddr.hpp"
 
@@ -16,8 +16,8 @@ static unsigned int testPort = 9999;
 static std::atomic<bool> done;
 static ModbusStats clientStats = {};
 static ModbusStats serverStats = {};
-static ModbusBuffer clientRegisters;
-static ModbusBuffer serverRegisters;
+static Buffer<uint16_t> clientRegisters;
+static Buffer<uint16_t> serverRegisters;
 
 void clearStats()
 {

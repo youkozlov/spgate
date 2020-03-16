@@ -9,12 +9,13 @@
 #include "GateStorage.hpp"
 #include "SpBusRx.hpp"
 
+#include "utils/Buffer.hpp"
+
 namespace sg
 {
 
 class Link;
 class ParamParser;
-class ModbusBuffer;
 struct GateParams;
 struct SpBusFrame;
 struct GateReadItemResult;
@@ -26,7 +27,7 @@ public:
     {
         GateParams const&  gateParams;
         ParamParser const& parser;
-        ModbusBuffer&      regs;
+        Buffer<uint16_t>&  regs;
     };
 
     explicit SpBusClient(Init const&);
@@ -53,7 +54,7 @@ private:
 
     GateParams const&     gateParams;
     GateStorage           storage;
-    ModbusBuffer&         regs;
+    Buffer<uint16_t>&     regs;
     ClientFsm             fsm;
     std::unique_ptr<Link> link;
     SpBusRx               rx;

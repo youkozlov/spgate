@@ -4,9 +4,9 @@
 #include <array>
 
 #include "utils/ParamParser.hpp"
+#include "utils/Buffer.hpp"
 
 #include "modbus/ModbusDefs.hpp"
-#include "modbus/ModbusBuffer.hpp"
 
 namespace sg
 {
@@ -57,7 +57,7 @@ private:
     
     ModbusStats                     modbusStats{};
 
-    ModbusBuffer                    modbusRegs;
+    Buffer<uint16_t>                modbusRegs;
     std::unique_ptr<LinkAcceptorRl> linkAcceptor;
     std::unique_ptr<ModbusServer>   modbus;
 

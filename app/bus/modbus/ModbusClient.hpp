@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "types/IpAddr.hpp"
+#include "utils/Buffer.hpp"
 #include "ModbusDefs.hpp"
 
 namespace sg
@@ -21,7 +22,6 @@ enum class ModbusClientState
 };
 
 class WrapBuffer;
-class ModbusBuffer;
 class Link;
 
 class ModbusClient
@@ -30,7 +30,7 @@ public:
     struct Init
     {
         IpAddr const& ipAddr;
-        ModbusBuffer& regs;
+        Buffer<uint16_t>& regs;
         ModbusStats& stats;
     };
     explicit ModbusClient(Init const&);
@@ -64,9 +64,9 @@ private:
     ModbusClientState state;
     std::unique_ptr<Link> link;
 
-    IpAddr const& ipAddr;
-    ModbusBuffer& regs;
-    ModbusStats& stats;
+    IpAddr const&     ipAddr;
+    Buffer<uint16_t>& regs;
+    ModbusStats&      stats;
     
     std::array<unsigned char, rxBufferSize> rawBuffer;
     uint64_t tick;

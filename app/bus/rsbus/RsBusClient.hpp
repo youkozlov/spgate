@@ -2,6 +2,8 @@
 
 #include "sm/Client.hpp"
 
+#include "utils/Buffer.hpp"
+
 namespace sg
 {
 
@@ -16,7 +18,7 @@ public:
     {
         GateParams const&  gateParams;
         ParamParser const& parser;
-        ModbusBuffer&      regs;
+        Buffer<uint16_t>&  regs;
     };
     
     explicit RsBusClient(Init const&);
@@ -38,7 +40,7 @@ public:
 private:
 
     GateParams const& gateParams;
-    ModbusBuffer&     regs;
+    Buffer<uint16_t>& regs;
 };
 
 }

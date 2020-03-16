@@ -6,7 +6,7 @@
 #include "sm/Server.hpp"
 #include "sm/ServerFsm.hpp"
 #include "SpBusRx.hpp"
-#include "Buffer.hpp"
+#include "utils/Buffer.hpp"
 
 namespace sg
 {

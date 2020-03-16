@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 #include "BusGate.hpp"
 #include "GateStorage.hpp"
-#include "spbus/Buffer.hpp"
 #include "spbus/SpBusServer.hpp"
 #include "utils/Utils.hpp"
 
@@ -22,7 +21,7 @@ static Buffer<float>     spBusBuffer;
 
 static unsigned int      testPortModbus = 12345;
 static ModbusStats       clientStats{};
-static ModbusBuffer      clientRegisters;
+static Buffer<uint16_t>  clientRegisters;
 
 void SpBusServerTest()
 {

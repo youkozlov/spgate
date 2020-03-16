@@ -7,6 +7,8 @@
 #include "sm/Server.hpp"
 #include "sm/ServerFsm.hpp"
 
+#include "utils/Buffer.hpp"
+
 #include "ModbusDefs.hpp"
 
 namespace sg
@@ -22,9 +24,9 @@ class ModbusServer : public Server
 public:
     struct Init
     {
-        ModbusBuffer& regs;
-        LinkAcceptor& acceptor;
-        ModbusStats&  stats;
+        Buffer<uint16_t>& regs;
+        LinkAcceptor&     acceptor;
+        ModbusStats&      stats;
     };
     explicit ModbusServer(Init const&);
     
@@ -54,7 +56,7 @@ private:
 
     ServerFsm             fsm;
     std::unique_ptr<Link> link;
-    ModbusBuffer&         regs;
+    Buffer<uint16_t>&     regs;
     LinkAcceptor&         acceptor;
     ModbusStats&          stats;
     

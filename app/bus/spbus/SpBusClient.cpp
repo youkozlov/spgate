@@ -1,7 +1,6 @@
 #include "SpBusClient.hpp"
 #include "sockets/LinkRl.hpp"
 #include "types/ParamsDefs.hpp"
-#include "modbus/ModbusBuffer.hpp"
 
 #include "SpBusDefs.hpp"
 #include "SpBusCodec.hpp"
