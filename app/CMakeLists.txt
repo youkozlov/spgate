@@ -7,6 +7,7 @@ add_library(app
     utils/Logger.cpp
     utils/Utils.cpp
     utils/ParamParser.cpp
+    utils/Timer.cpp
 
     sm/ClientFsm.cpp
     sm/ServerFsm.cpp
@@ -20,7 +21,11 @@ add_library(app
     bus/spbus/SpBusRx.cpp
     bus/spbus/SpBusServer.cpp
     bus/rsbus/RsBusClient.cpp
+    bus/rsbus/RsBusFsm.cpp
+    bus/rsbus/RsBusCodec.cpp
+    bus/rsbus/RsBusRx.cpp
     bus/GateStorage.cpp
+    bus/RegAccessor.cpp
 
     BusGate.cpp
     ) 

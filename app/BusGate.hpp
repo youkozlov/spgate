@@ -7,6 +7,8 @@
 #include "utils/Buffer.hpp"
 
 #include "modbus/ModbusDefs.hpp"
+#include "BusStats.hpp"
+#include "RegAccessor.hpp"
 
 namespace sg
 {
@@ -14,7 +16,7 @@ namespace sg
 class TagAccessor;
 class LinkAcceptorRl;
 class ModbusServer;
-class Client;
+class Bus;
 
 enum class BusGateState
 {
@@ -58,10 +60,12 @@ private:
     ModbusStats                     modbusStats{};
 
     Buffer<uint16_t>                modbusRegs;
+    RegAccessor                     regAccessor;
     std::unique_ptr<LinkAcceptorRl> linkAcceptor;
     std::unique_ptr<ModbusServer>   modbus;
-
-    std::array<std::unique_ptr<Client>, maxNumGates> gates;
+    BusStats                                      spbusStats{};
+    BusStats                                      rsbusStats{};
+    std::array<std::unique_ptr<Bus>, maxNumGates> gates;
 };
 
 }

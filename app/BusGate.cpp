@@ -14,7 +14,11 @@ namespace sg
 BusGate::BusGate(Init const& init)
     : iniFileName(init.iniFileName)
     , state(BusGateState::init)
+    , regAccessor(modbusRegs)
 {
+    static_assert(sizeof(int) == 4, "");
+    static_assert(sizeof(float) == 4, "");
+    static_assert(sizeof(unsigned) == 4, "");
 }
 
 BusGate::~BusGate()
@@ -105,14 +109,14 @@ bool BusGate::createGates()
             {
             case GateType::sps:
             {
-                SpBusClient::Init init{it, parser, modbusRegs};
-                gates[i] = std::unique_ptr<Client>(new SpBusClient(init));
+                SpBusClient::Init init{it, parser, regAccessor, spbusStats};
+                gates[i] = std::unique_ptr<Bus>(new SpBusClient(init));
             }
             break;
             case GateType::m4:
             {
-                RsBusClient::Init init{it, parser, modbusRegs};
-                gates[i] = std::unique_ptr<Client>(new RsBusClient(init));
+                RsBusClient::Init init{it, parser, regAccessor, rsbusStats};
+                gates[i] = std::unique_ptr<Bus>(new RsBusClient(init));
             }
             break;
             }

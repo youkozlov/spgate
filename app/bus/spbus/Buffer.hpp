@@ -16,7 +16,7 @@ public:
         std::fill(buf.begin(), buf.end(), 0);
     }
 
-    unsigned int size() const
+    int size() const
     {
         return capacity;
     }
@@ -35,7 +35,7 @@ public:
     void operator=(Buffer const&) = delete;
     
 private:
-    static constexpr unsigned int capacity = 1024 * 16;
+    static constexpr int capacity = 1024 * 16;
     std::array<T, capacity> buf{};
 };
 

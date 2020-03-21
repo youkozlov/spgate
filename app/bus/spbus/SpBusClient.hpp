@@ -3,31 +3,33 @@
 #include <memory>
 #include <array>
 
+#include "Bus.hpp"
 #include "sm/Client.hpp"
 #include "sm/ClientFsm.hpp"
 
 #include "GateStorage.hpp"
 #include "SpBusRx.hpp"
 
-#include "utils/Buffer.hpp"
-
 namespace sg
 {
 
 class Link;
 class ParamParser;
+class RegAccessor;
 struct GateParams;
 struct SpBusFrame;
 struct GateReadItemResult;
+struct BusStats;
 
-class SpBusClient : public Client
+class SpBusClient : public Bus, public Client
 {
 public:
     struct Init
     {
         GateParams const&  gateParams;
         ParamParser const& parser;
-        Buffer<uint16_t>&  regs;
+        RegAccessor&       regs;
+        BusStats&          stats;
     };
 
     explicit SpBusClient(Init const&);
@@ -42,9 +44,11 @@ public:
 
     int receive() final;
 
-    unsigned int period() final;
+    unsigned int period() const final;
 
     void reset() final;
+
+    void timeout() final;
 
 private:
     
@@ -54,7 +58,8 @@ private:
 
     GateParams const&     gateParams;
     GateStorage           storage;
-    Buffer<uint16_t>&     regs;
+    RegAccessor&          regs;
+    BusStats&             stats;
     ClientFsm             fsm;
     std::unique_ptr<Link> link;
     SpBusRx               rx;

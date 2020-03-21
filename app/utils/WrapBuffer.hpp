@@ -71,6 +71,16 @@ public:
         pos += length;
     }
 
+    void write(unsigned char* buf, unsigned int length)
+    {
+        if (pos + length >= len)
+        {
+            return;
+        }
+        std::copy(buf, buf + length, &ptr[pos]);
+        pos += length;
+    }
+
     void writeBe(int ch)
     {
         ptr[pos++] = ch >> 8;

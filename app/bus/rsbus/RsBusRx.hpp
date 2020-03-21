@@ -5,14 +5,18 @@ namespace sg
 
 class Link;
 
-class SpBusRx
+class RsBusRx
 {
 public:
-    explicit SpBusRx(Link& link);
+    enum Result
+    {
+        invalid = -9
+    };
+    explicit RsBusRx(Link& link);
 
     int receive(unsigned char*, unsigned int);
 
-public:
+private:
     Link& link;
 };
 

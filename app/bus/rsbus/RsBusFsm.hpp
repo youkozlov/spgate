@@ -5,48 +5,53 @@
 namespace sg
 {
 
-class Client;
+class RsBus;
 
-class ClientFsm
+class RsBusFsm
 {
 public:
 
-    explicit ClientFsm(Client&);
-
-    ~ClientFsm();
-
-    void tickInd();
-
-private:
     enum class State
     {
         init,
         connect,
+        sendStartSequence,
+        sendSessionReq,
+        recvSessionRsp,
         idle,
-        send,
-        receive,
+        sendDataReq,
+        recvDataRsp,
         error,
         timeout
     };
 
+    explicit RsBusFsm(RsBus&);
+
+    void tickInd();
+
+private:
+
     void init();
     void connect();
+    void sendStartSequence();
+    void sendSessionReq();
+    void recvSessionRsp();
     void idle();
-    void send();
-    void receive();
+    void sendDataReq();
+    void recvDataRsp();
     void error();
     void timeout();
 
     void changeState(State);
     char const* toString(State) const;
 
-    State   state;
-    Client& client;
-    int     tick;
-
+    RsBus& bus;
+    State  state;
+    int    tick;
     Timer  recvTimer;
     Timer  idleTimer;
     Timer  errorTimer;
     Timer  timeoutTimer;
 };
+
 }

@@ -1,24 +1,33 @@
 #pragma once
 
-#include "sm/Client.hpp"
+#include "Bus.hpp"
+#include "RsBus.hpp"
+#include "RsBusFsm.hpp"
+#include "RsBusRx.hpp"
 
-#include "utils/Buffer.hpp"
+#include "GateStorage.hpp"
+
+#include <memory>
+#include <array>
 
 namespace sg
 {
 
 class ParamParser;
-class ModbusBuffer;
+class Link;
+class RegAccessor;
 struct GateParams;
+struct BusStats;
 
-class RsBusClient : public Client
+class RsBusClient : public Bus, public RsBus
 {
 public:
     struct Init
     {
         GateParams const&  gateParams;
         ParamParser const& parser;
-        Buffer<uint16_t>&  regs;
+        RegAccessor&       regs;
+        BusStats&          stats;
     };
     
     explicit RsBusClient(Init const&);
@@ -29,18 +38,37 @@ public:
 
     int connect() final;
 
-    int send() final;
+    int sendStartSequence() final;
 
-    int receive() final;
+    int sendSessionReq() final;
 
-    unsigned int period() final;
+    int recvSessionRsp() final;
+
+    int sendDataReq() final;
+
+    int recvDataRsp() final;
+
+    unsigned int period() const final;
 
     void reset() final;
 
+    void timeout() final;
+
 private:
 
-    GateParams const& gateParams;
-    Buffer<uint16_t>& regs;
+    GateReadItem const& getNext();
+    GateReadItem const& getCurrent() const;
+
+    GateParams const&     gateParams;
+    GateStorage           storage;
+    RegAccessor&          regs;
+    BusStats&             stats;
+    RsBusFsm              fsm;
+    std::unique_ptr<Link> link;
+    RsBusRx               rx;
+
+    std::array<unsigned char, 256> rawBuffer;
+    unsigned int                   currentParamId;
 };
 
 }

@@ -2,6 +2,7 @@
 
 #include "Server.hpp"
 #include "utils/Logger.hpp"
+#include "utils/TickUtils.hpp"
 
 namespace sg
 {

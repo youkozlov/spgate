@@ -41,6 +41,21 @@ bool parseValue(unsigned int& prm, const char* str, int base = 10)
     }
 }
 
+bool parseReadPeriod(unsigned int& prm, const char* str)
+{
+    if (sscanf(str, "%u", &prm) != 1)
+    {
+        LM(LE, "Unexpected value: %s", str);
+        return false;
+    }
+    if (prm < 50 || prm > 65535)
+    {
+        LM(LE, "Valid range is (50, 65535) but given param: %u", prm);
+        return false;
+    }
+    return true;
+}
+
 bool parseValue(GateType& prm, const char* str)
 {
     if (!strcmp(str, "sps"))
@@ -250,7 +265,7 @@ bool ParamParser::parseGates(rlIniFile& parser, char const* gateName)
 
     parseName(parser, gateName, "read_period", mandatory, [&prms](const char* str)
     {
-        return parseValue(prms.readPeriod, str);
+        return parseReadPeriod(prms.readPeriod, str);
     });
 
     gates.push_back(prms);

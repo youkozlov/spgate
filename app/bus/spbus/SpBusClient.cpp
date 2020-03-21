@@ -2,6 +2,8 @@
 #include "sockets/LinkRl.hpp"
 #include "types/ParamsDefs.hpp"
 
+#include "RegAccessor.hpp"
+#include "BusStats.hpp"
 #include "SpBusDefs.hpp"
 #include "SpBusCodec.hpp"
 
@@ -16,6 +18,7 @@ SpBusClient::SpBusClient(Init const& init)
     : gateParams(init.gateParams)
     , storage(init.parser)
     , regs(init.regs)
+    , stats(init.stats)
     , fsm(*this)
     , link(std::unique_ptr<Link>(new LinkRl(gateParams.gateAddr)))
     , rx(*link)
@@ -66,6 +69,8 @@ int SpBusClient::send()
         return 1;
     }
 
+    stats.nRdp += 1;
+
     return link->write(txBuf.cbegin(), txBuf.size());
 }
 
@@ -75,7 +80,7 @@ int SpBusClient::receiveFrame(SpBusFrame& frame)
 
     if (!len)
     {
-        return 0;
+        return len;
     }
     else if (len < 0)
     {
@@ -108,15 +113,11 @@ int SpBusClient::receiveFrame(SpBusFrame& frame)
 
 int SpBusClient::receive()
 {
-    auto& currentParam = getCurrent();
-    auto& prms = currentParam.prms;
+    auto& item = getCurrent();
+    auto& prms = item.prms;
 
     float   floatValue;
     int32_t fixedValue;
-
-    constexpr int regsPerParam = 4;
-    auto& valReg = regs[prms.id * regsPerParam];
-    auto& valSt  = regs[prms.id * regsPerParam + 2];
 
     SpBusFrame frame{};
 
@@ -128,45 +129,60 @@ int SpBusClient::receive()
     }
     else if (len < 0)
     {
-        valSt = GateReadItemResult::timeout;
+        stats.nError += 1;
     }
     else if (!frame.data.numInfos)
     {
-        valSt = GateReadItemResult::invalid;
+        regs.setStatus(item.prms.id, RegAccessor::invalid);
+
+        stats.nInvalid += 1;
     }
     else if (prms.type == ParamType::floatPoint
             && sscanf(frame.data.infos[0].value.param, "%f", &floatValue) == 1)
     {
-        valSt = GateReadItemResult::ready;
-
         float const netFloat = Utils::reverse(floatValue);
-        memcpy(&valReg, &netFloat, sizeof(netFloat));
+        regs.setValue(item.prms.id, netFloat);
+
+        stats.nRsp += 1;
     }
     else if (prms.type == ParamType::fixedPoint
             && sscanf(frame.data.infos[0].value.param, "%d", &fixedValue) == 1)
     {
-        valSt = GateReadItemResult::ready;
-
         int32_t const netFixed = Utils::reverse(fixedValue);
-        memcpy(&valReg, &netFixed, sizeof(netFixed));
+        regs.setValue(item.prms.id, netFixed);
+
+        stats.nRsp += 1;
     }
     else
     {
-        valSt = GateReadItemResult::invalid;
+        regs.setStatus(item.prms.id, RegAccessor::invalid);
+        stats.nInvalid += 1;
     }
 
     return len;
 }
 
-unsigned int SpBusClient::period()
+unsigned int SpBusClient::period() const
 {
     return gateParams.readPeriod;
 }
 
 void SpBusClient::reset()
 {
+    for (unsigned i = 0; i < storage.getNumItems(); ++i)
+    {
+        auto& item = storage.getItem(i);
+        regs.setStatus(item.prms.id, RegAccessor::timeout);
+    }
     currentParamId = 0;
     link->close();
+}
+
+void SpBusClient::timeout()
+{
+    auto& item = getCurrent();
+    regs.setStatus(item.prms.id, RegAccessor::timeout);
+    stats.nTimeout += 1;
 }
 
 GateReadItem const& SpBusClient::getNext()

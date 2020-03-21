@@ -3,14 +3,23 @@
 #include "Client.hpp"
 
 #include "utils/Logger.hpp"
+#include "utils/TickUtils.hpp"
+#include <algorithm>
+
+static constexpr unsigned int recvTimeoutMs  = 2000;
+static constexpr unsigned int errorTimeoutMs = 5000;
 
 namespace sg
 {
 
 ClientFsm::ClientFsm(Client& g)
-    : state(ClientFsmState::init)
+    : state(State::init)
     , client(g)
     , tick(0)
+    , recvTimer(recvTimeoutMs)
+    , idleTimer(client.period())
+    , errorTimer(errorTimeoutMs)
+    , timeoutTimer(errorTimeoutMs * 3)
 {
 }
 
@@ -22,23 +31,26 @@ void ClientFsm::tickInd()
 {
     switch (state)
     {
-    case ClientFsmState::init:
+    case State::init:
         init();
     break;
-    case ClientFsmState::connect:
+    case State::connect:
         connect();
     break;
-    case ClientFsmState::idle:
+    case State::idle:
         idle();
     break;
-    case ClientFsmState::send:
+    case State::send:
         send();
     break;
-    case ClientFsmState::receive:
+    case State::receive:
         receive();
     break;
-    case ClientFsmState::error:
+    case State::error:
         error();
+    break;
+    case State::timeout:
+        timeout();
     break;
     }
 
@@ -49,7 +61,7 @@ void ClientFsm::init()
 {
     if (tick % 128 == 0)
     {
-        changeState(ClientFsmState::connect);
+        changeState(State::connect);
     }
 }
 
@@ -58,19 +70,20 @@ void ClientFsm::connect()
     if (client.connect() < 0)
     {
         client.reset();
-        changeState(ClientFsmState::error);
+        errorTimer.set();
+        changeState(State::error);
     }
     else
     {
-        changeState(ClientFsmState::idle);
+        changeState(State::send);
     }
 }
 
 void ClientFsm::idle()
 {
-    if (tick % client.period() == 0)
+    if (idleTimer.isExpired())
     {
-        changeState(ClientFsmState::send);
+        changeState(State::send);
     }
 }
 
@@ -79,11 +92,13 @@ void ClientFsm::send()
     if (client.send() < 0)
     {
         client.reset();
-        changeState(ClientFsmState::error);
+        errorTimer.set();
+        changeState(State::error);
     }
     else
     {
-        changeState(ClientFsmState::receive);
+        recvTimer.set();
+        changeState(State::receive);
     }
 }
 
@@ -93,44 +108,63 @@ void ClientFsm::receive()
     if (result < 0)
     {
         client.reset();
-        changeState(ClientFsmState::error);
+        errorTimer.set();
+        changeState(State::error);
+    }
+    else if (recvTimer.isExpired())
+    {
+        client.timeout();
+        timeoutTimer.set();
+        changeState(State::timeout);
     }
     else if (result)
     {
-        changeState(ClientFsmState::idle);
+        idleTimer.set();
+        changeState(State::idle);
     }
 }
 
 void ClientFsm::error()
 {
-    if (tick % 1024 == 0)
+    if (errorTimer.isExpired())
     {
-        changeState(ClientFsmState::init);
+        changeState(State::init);
     }
 }
 
-void ClientFsm::changeState(ClientFsmState newSt)
+void ClientFsm::timeout()
+{
+    if (timeoutTimer.isExpired())
+    {
+        idleTimer.set();
+        changeState(State::idle);
+    }
+}
+
+void ClientFsm::changeState(State newSt)
 {
     LM(LI, "Change state: %s -> %s", toString(state), toString(newSt));
     state = newSt;
 }
 
-char const* ClientFsm::toString(ClientFsmState st) const
+char const* ClientFsm::toString(State st) const
 {
     switch (st)
     {
-    case ClientFsmState::init:
+    case State::init:
         return "Init";
-    case ClientFsmState::connect:
+    case State::connect:
         return "Connect";
-    case ClientFsmState::idle:
+    case State::idle:
         return "Idle";
-    case ClientFsmState::send:
+    case State::send:
         return "Send";
-    case ClientFsmState::receive:
+    case State::receive:
         return "Receive";
-    case ClientFsmState::error:
+    case State::error:
         return "Error";
+    case State::timeout:
+        return "Timeout";
     default:
         return "Invalid";
     }

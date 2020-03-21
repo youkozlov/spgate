@@ -6,6 +6,7 @@
 
 #include "sockets/LinkAcceptorRl.hpp"
 #include "utils/Utils.hpp"
+#include <utils/TickUtils.hpp>
 #include "types/IpAddr.hpp"
 
 #include "modbus/ModbusClient.hpp"
@@ -54,7 +55,7 @@ void SpBusSendModbusAdu()
             client.exec(req);
         }
         client.tickInd();
-        Utils::nsleep(1000 * 1000 * 2);
+        Utils::nsleep(TickUtils::getTickPeriod() * 2);
     }
 }
 
@@ -85,7 +86,7 @@ TEST(BusGateTest, Init)
     while (cnt--)
     {
         spgate.tickInd();
-        Utils::nsleep();
+        Utils::nsleep(TickUtils::getTickPeriod());
     }
 
     done = true;
