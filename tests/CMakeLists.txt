@@ -9,6 +9,7 @@ add_executable(app_ut
     SpBusClientTest.cpp
     ModbusServerTest.cpp
     ParamParserTest.cpp
+    UtilsTest.cpp
     )
 
 target_link_libraries(app_ut gmock gmock_main gtest gtest_main app)

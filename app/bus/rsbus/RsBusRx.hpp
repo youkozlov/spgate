@@ -5,6 +5,9 @@ namespace sg
 
 class Link;
 
+namespace rsbus
+{
+
 class RsBusRx
 {
 public:
@@ -20,4 +23,5 @@ private:
     Link& link;
 };
 
+}
 }

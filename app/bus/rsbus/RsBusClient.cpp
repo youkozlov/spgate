@@ -8,10 +8,14 @@
 
 #include "utils/WrapBuffer.hpp"
 #include "utils/Logger.hpp"
+#include "utils/Utils.hpp"
 
 #include "sockets/LinkRl.hpp"
 
 namespace sg
+{
+
+namespace rsbus
 {
 
 RsBusClient::RsBusClient(Init const& init)
@@ -22,6 +26,7 @@ RsBusClient::RsBusClient(Init const& init)
     , fsm(*this)
     , link(std::unique_ptr<Link>(new LinkRl(gateParams.gateAddr)))
     , rx(*link)
+    , currentParamId(0)
 {
     if (!storage.configure(gateParams))
     {
@@ -46,13 +51,7 @@ int RsBusClient::connect()
 int RsBusClient::sendStartSequence()
 {
     WrapBuffer txBuf(&rawBuffer[0], rawBuffer.size());
-    RsBusFrame frame{};
-    RsBusCodec codec(txBuf, frame);
-    if (!codec.encodeStartSequence())
-    {
-        return -1;
-    }
-
+    txBuf.write(0xFF);
     stats.nTx += 1;
     return link->write(txBuf.cbegin(), txBuf.size());
 }
@@ -65,14 +64,19 @@ int RsBusClient::sendSessionReq()
     WrapBuffer txBuf(&rawBuffer[0], rawBuffer.size());
 
     RsBusFrame frame{};
-    frame.nt = device.addr;
+    frame.nt      = device.addr;
+    frame.rc      = SRC;
+    frame.data[0] = 0x00;
+    frame.data[1] = 0x00;
+    frame.data[2] = 0x00;
+    frame.data[3] = 0x00;
+    frame.qty     = 4;
 
     RsBusCodec codec(txBuf, frame);
-    if (!codec.encodeSessionReq())
+    if (!codec.encode())
     {
         return -1;
     }
-
     stats.nTx += 1;
     return link->write(txBuf.cbegin(), txBuf.size());
 }
@@ -104,22 +108,41 @@ int RsBusClient::recvSessionRsp()
 
     RsBusCodec codec(rxBuf, frame);
 
-    if (!codec.decodeSessionRsp())
+    if (!codec.decode())
     {
         stats.nInvalid += 1;
         return 0;
     }
 
-    if (frame.rc != 0x3F || frame.data[0] != 0x54
-     || frame.data[1] != 0x29)
+    if (frame.rc != SRC)
     {
-        LM(LE, "Invalid content of session respond: %02X:%02X:%02X:%02X:%02X"
-            , frame.nt
-            , frame.rc
-            , frame.data[0]
-            , frame.data[1]
-            , frame.data[2]);
+        LM(LE, "Unexpected function code=%02X, data[0]=%02X", frame.rc, frame.data[0]);
         return 0;
+    }
+
+    if (frame.qty != 3)
+    {
+        LM(LE, "Unexpected session respond length: %u", frame.qty);
+        stats.nInvalid += 1;
+        return 0;
+    }
+
+    uint16_t const deviceType = (frame.data[0] << 8) | frame.data[1];
+
+    switch (deviceType)
+    {
+    case DeviceType::type741:
+    case DeviceType::type742:
+    case DeviceType::type743:
+    case DeviceType::type941:
+    case DeviceType::type942:
+    case DeviceType::type943:
+    break;
+    default:
+    {
+        LM(LE, "Unsupported device type %02X:%02X", frame.data[0], frame.data[1]);
+        return 0;
+    }
     }
     return len;
 }
@@ -130,23 +153,30 @@ int RsBusClient::sendDataReq()
     auto& device = item.device;
     auto& prms   = item.prms;
 
+    if (prms.func != RDP)
+    {
+        LM(LE, "Unsupported function code=%02X", prms.func);
+        return -1;
+    }
+
     WrapBuffer txBuf(&rawBuffer[0], rawBuffer.size());
     RsBusFrame frame{};
-    frame.nt  = device.addr;
-    frame.rc  = prms.func;
-    frame.a1  = prms.addr >> 8;
-    frame.a0  = prms.addr;
-    frame.qty = sizeof(float);
+    frame.nt      = device.addr;
+    frame.rc      = prms.func;
+    frame.data[0] = prms.addr;
+    frame.data[1] = prms.addr >> 8;
+    frame.data[2] = sizeof(float);
+    frame.data[3] = 0x00;
+    frame.qty     = 4;
 
     RsBusCodec codec(txBuf, frame);
-    if (!codec.encodeDataReq())
+    if (!codec.encode())
     {
         return -1;
     }
 
     stats.nRdp += 1;
-
-    stats.nTx += 1;
+    stats.nTx  += 1;
     return link->write(txBuf.cbegin(), txBuf.size());
 }
 
@@ -179,8 +209,24 @@ int RsBusClient::recvDataRsp()
 
     RsBusCodec codec(rxBuf, frame);
 
-    if (!codec.decodeDataRsp())
+    if (!codec.decode())
     {
+        regs.setStatus(item.prms.id, RegAccessor::invalid);
+        stats.nInvalid += 1;
+        return len;
+    }
+
+    if (frame.rc != RDP)
+    {
+        LM(LE, "Unexpected function code=%02X, data[0]=%02X", frame.rc, frame.data[0]);
+        regs.setStatus(item.prms.id, RegAccessor::invalid);
+        stats.nInvalid += 1;
+        return len;
+    }
+
+    if (frame.qty != sizeof(float))
+    {
+        LM(LE, "Unexpected length of respond: %u", frame.qty);
         regs.setStatus(item.prms.id, RegAccessor::invalid);
         stats.nInvalid += 1;
         return len;
@@ -188,16 +234,12 @@ int RsBusClient::recvDataRsp()
 
     regs.setStatus(item.prms.id, RegAccessor::ready);
 
-    // float const netFloat = Utils::reverse(floatValue);
-    // memcpy(&valReg, &netFloat, sizeof(netFloat));
+    float rsbusFloat{};
+    memcpy(&rsbusFloat, frame.data, sizeof(float));
+    float const valFloat = Utils::decodeRsBus(rsbusFloat);
+    float const netFloat = Utils::reverse(valFloat);
 
-    LM(LE, "Invalid content of session respond: nt=%02X rc=%02X  %02X:%02X:%02X:%02X"
-        , frame.nt
-        , frame.rc
-        , frame.data[0]
-        , frame.data[1]
-        , frame.data[2]
-        , frame.data[3]);
+    regs.setValue(item.prms.id, netFloat);
 
     stats.nRsp += 1;
 
@@ -239,4 +281,5 @@ GateReadItem const& RsBusClient::getCurrent() const
     return storage.getItem(currentParamId % storage.getNumItems());
 }
 
+}
 }

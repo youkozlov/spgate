@@ -13,7 +13,6 @@
 namespace sg
 {
 
-class TagAccessor;
 class LinkAcceptorRl;
 class ModbusServer;
 class Bus;
@@ -43,7 +42,6 @@ public:
 
 private:
     bool validateTags();
-    bool initSerialPort();
     void processInit();
     void processRun();
     void processError();

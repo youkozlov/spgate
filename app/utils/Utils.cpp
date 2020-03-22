@@ -87,5 +87,34 @@ int32_t Utils::reverse(int32_t const input)
    return retVal;
 }
 
+float Utils::encodeRsBus(float const input)
+{
+    float retVal{};
+    unsigned char* toConvert   = (unsigned char*)&input;
+    unsigned char* returnValue = (unsigned char*)&retVal;
+
+    uint16_t const mantissa = (toConvert[3] << 8) | toConvert[2];
+
+    returnValue[0] = toConvert[0];
+    returnValue[1] = toConvert[1];
+    returnValue[2] = (toConvert[2] & 0x7F) | (toConvert[3] & 0x80);
+    returnValue[3] = mantissa >> 7;
+
+    return retVal;
+}
+
+float Utils::decodeRsBus(float const input)
+{
+    float retVal{};
+    unsigned char* toConvert   = (unsigned char*)&input;
+    unsigned char* returnValue = (unsigned char*)&retVal;
+
+    returnValue[0] = toConvert[0];
+    returnValue[1] = toConvert[1];
+    returnValue[2] = (toConvert[2] & 0x7F) | (toConvert[3] << 7);
+    returnValue[3] = (toConvert[3] >> 0x1) | (toConvert[2] & 0x80);
+
+    return retVal;
+}
 
 }

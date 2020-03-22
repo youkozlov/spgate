@@ -82,6 +82,11 @@ int SpBusClient::receiveFrame(SpBusFrame& frame)
     {
         return len;
     }
+    else if (len == SpBusRx::invalid)
+    {
+        stats.nInvalid += 1;
+        return 0;
+    }
     else if (len < 0)
     {
         return len;
@@ -91,21 +96,23 @@ int SpBusClient::receiveFrame(SpBusFrame& frame)
 
     if (Utils::crcode(rxBuf.cbegin() + 2, len - 2))
     {
-        LM(LE, "CRC NOK");
-        return -1;
+        stats.nInvalid += 1;
+        return 0;
     }
 
     SpBusCodec codec(rxBuf, frame);
 
     if (!codec.decode())
     {
-        return -1;
+        stats.nInvalid += 1;
+        return 0;
     }
 
     if (frame.hdr.fc != RSP)
     {
+        stats.nInvalid += 1;
         LM(LE, "Unexpected function=%02X", frame.hdr.fc);
-        return -1;
+        return 0;
     }
 
     return len;
@@ -134,7 +141,6 @@ int SpBusClient::receive()
     else if (!frame.data.numInfos)
     {
         regs.setStatus(item.prms.id, RegAccessor::invalid);
-
         stats.nInvalid += 1;
     }
     else if (prms.type == ParamType::floatPoint
@@ -142,7 +148,6 @@ int SpBusClient::receive()
     {
         float const netFloat = Utils::reverse(floatValue);
         regs.setValue(item.prms.id, netFloat);
-
         stats.nRsp += 1;
     }
     else if (prms.type == ParamType::fixedPoint
@@ -150,7 +155,6 @@ int SpBusClient::receive()
     {
         int32_t const netFixed = Utils::reverse(fixedValue);
         regs.setValue(item.prms.id, netFixed);
-
         stats.nRsp += 1;
     }
     else

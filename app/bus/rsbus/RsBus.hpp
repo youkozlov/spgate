@@ -3,6 +3,9 @@
 namespace sg
 {
 
+namespace rsbus
+{
+
 class RsBus
 {
 public:
@@ -27,4 +30,5 @@ public:
     virtual void timeout() = 0;
 };
 
+}
 }

@@ -6,25 +6,29 @@ namespace sg
 {
 
 class WrapBuffer;
+
+namespace rsbus
+{
+
 struct RsBusFrame;
 
 class RsBusCodec
 {
 public:
+    enum class State
+    {
+    };
+
     explicit RsBusCodec(WrapBuffer&, RsBusFrame&);
 
-    bool encodeStartSequence();
+    bool encode();
 
-    bool encodeSessionReq();
-
-    bool encodeDataReq();
-
-    bool decodeSessionRsp();
-
-    bool decodeDataRsp();
+    bool decode();
 
 private:
     WrapBuffer& buf;
     RsBusFrame& frame;
 };
+
+}
 }

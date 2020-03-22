@@ -28,15 +28,18 @@ bool parseValue(IpAddr& prm, const char* str)
     return true;
 }
 
-bool parseValue(unsigned int& prm, const char* str, int base = 10)
+bool parseValue(unsigned int& prm, const char* str)
 {
-    switch (base)
+    if (sscanf(str, "0x%x", &prm) == 1)
     {
-    case 10:
-        return sscanf(str, "%u", &prm) == 1;
-    case 16:
-        return sscanf(str, "%x", &prm) == 1;
-    default:
+        return true;
+    }
+    else if (sscanf(str, "%u", &prm) == 1)
+    {
+        return true;
+    }
+    else
+    {
         return false;
     }
 }
@@ -260,7 +263,7 @@ bool ParamParser::parseGates(rlIniFile& parser, char const* gateName)
 
     parseName(parser, gateName, "addr", nameType, [&prms](const char* str)
     {
-        return parseValue(prms.addr, str, 16);
+        return parseValue(prms.addr, str);
     });
 
     parseName(parser, gateName, "read_period", mandatory, [&prms](const char* str)
@@ -295,7 +298,7 @@ bool ParamParser::parseDevices(rlIniFile& parser, char const* deviceName)
 
     parseName(parser, deviceName, "addr", mandatory, [&prms](const char* str)
     {
-        return parseValue(prms.addr, str, 16);
+        return parseValue(prms.addr, str);
     });
 
     devices.push_back(prms);
@@ -325,7 +328,7 @@ bool ParamParser::parseParams(rlIniFile& parser, char const* paramName)
 
     parseName(parser, paramName, "func", mandatory, [&prms](const char* str)
     {
-        return parseValue(prms.func, str, 16);
+        return parseValue(prms.func, str);
     });
 
     parseName(parser, paramName, "chan", mandatory, [&prms](const char* str)

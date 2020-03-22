@@ -19,6 +19,9 @@ class RegAccessor;
 struct GateParams;
 struct BusStats;
 
+namespace rsbus
+{
+
 class RsBusClient : public Bus, public RsBus
 {
 public:
@@ -71,4 +74,5 @@ private:
     unsigned int                   currentParamId;
 };
 
+}
 }

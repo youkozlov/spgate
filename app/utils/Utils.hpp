@@ -22,5 +22,8 @@ public:
 
     static int32_t reverse(int32_t const);
 
+    static float   encodeRsBus(float const);
+
+    static float   decodeRsBus(float const);
 };
 }

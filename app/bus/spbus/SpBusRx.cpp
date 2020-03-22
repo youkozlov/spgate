@@ -20,7 +20,7 @@ int SpBusRx::receive(unsigned char* buf, unsigned int maxLen)
 
     if (!len)
     {
-        return 0;
+        return len;
     }
     else if (len < 0)
     {
@@ -33,13 +33,13 @@ int SpBusRx::receive(unsigned char* buf, unsigned int maxLen)
         if (link.read(&buf[rxLen], 1, 50) != 1)
         {
             LM(LE, "Function result is unexpected");
-            return -1;
+            return invalid;
         }
         rxLen += 1;
         if (rxLen >= maxLen)
         {
             LM(LE, "Received packet is too huge");
-            return -1;
+            return invalid;
         }
     }
     while (not (buf[rxLen - 4] == DLE && buf[rxLen - 3] == ETX));

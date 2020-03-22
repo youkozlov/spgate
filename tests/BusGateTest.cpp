@@ -2,6 +2,7 @@
 #include "BusGate.hpp"
 #include "GateStorage.hpp"
 #include "spbus/SpBusServer.hpp"
+#include "rsbus/RsBusServer.hpp"
 #include "utils/Utils.hpp"
 
 #include "sockets/LinkAcceptorRl.hpp"
@@ -18,7 +19,7 @@ using namespace sg;
 
 static unsigned int      testPort = 9999;
 static std::atomic<bool> done;
-static Buffer<float>     spBusBuffer;
+static Buffer<float>     busBuffer;
 
 static unsigned int      testPortModbus = 12345;
 static ModbusStats       clientStats{};
@@ -30,7 +31,7 @@ void SpBusServerTest()
     IpAddr const ipAddr = {"127.0.0.1", testPort};
     LinkAcceptorRl::Init acceptInit = {ipAddr};
     LinkAcceptorRl acceptor(acceptInit);
-    SpBusServer::Init spbusInit{spBusBuffer, acceptor};
+    SpBusServer::Init spbusInit{busBuffer, acceptor};
     SpBusServer server{spbusInit};
     while (!done)
     {        
@@ -39,7 +40,22 @@ void SpBusServerTest()
     }
 }
 
-void SpBusSendModbusAdu()
+void RsBusServerTest()
+{
+//    IpAddr const ipAddr = {"192.168.0.193", testPort};
+    IpAddr const ipAddr = {"127.0.0.1", testPort};
+    LinkAcceptorRl::Init acceptInit = {ipAddr};
+    LinkAcceptorRl acceptor(acceptInit);
+    rsbus::RsBusServer::Init busInit{busBuffer, acceptor};
+    rsbus::RsBusServer server{busInit};
+    while (!done)
+    {        
+        server.tickInd();
+        Utils::nsleep();
+    }
+}
+
+void BusGateSendModbusAdu()
 {
     ModbusRequest req{1, 0x3, 0, 32};
 
@@ -59,7 +75,7 @@ void SpBusSendModbusAdu()
     }
 }
 
-TEST(BusGateTest, Init)
+TEST(BusGateTest, SpBus)
 {
     char const* testedConfig = "../cfg/default.ini";
     int32_t const testedVal0 = -150000;
@@ -69,20 +85,20 @@ TEST(BusGateTest, Init)
     float   const testedVal4 = -0.153;
     float   const testedVal5 =  0.156;
 
-    spBusBuffer[1 * 2048 + 150] = testedVal0;
-    spBusBuffer[1 * 2048 + 153] = testedVal1;
-    spBusBuffer[1 * 2048 + 156] = testedVal2;
-    spBusBuffer[2 * 2048 + 150] = testedVal3;
-    spBusBuffer[2 * 2048 + 153] = testedVal4;
-    spBusBuffer[2 * 2048 + 156] = testedVal5;
+    busBuffer[1 * 2048 + 150] = testedVal0;
+    busBuffer[1 * 2048 + 153] = testedVal1;
+    busBuffer[1 * 2048 + 156] = testedVal2;
+    busBuffer[2 * 2048 + 150] = testedVal3;
+    busBuffer[2 * 2048 + 153] = testedVal4;
+    busBuffer[2 * 2048 + 156] = testedVal5;
 
     done = false;
     std::thread thr1(SpBusServerTest);
-    std::thread thr2(SpBusSendModbusAdu);
+    std::thread thr2(BusGateSendModbusAdu);
 
     BusGate::Init spgInit{testedConfig};
     BusGate spgate(spgInit);
-    int cnt = 4096;
+    int cnt = 2048;
     while (cnt--)
     {
         spgate.tickInd();
@@ -123,6 +139,52 @@ TEST(BusGateTest, Init)
     EXPECT_EQ(0, clientStats.nInvalid);
 }
 
+
+TEST(BusGateTest, RsBus)
+{
+    char const* testedConfig = "../cfg/default_rsbus.ini";
+    float   const testedVal0 = -150000;
+    float   const testedVal1 = -153.153;
+    float   const testedVal2 =  156.156;
+
+    busBuffer[150] = testedVal0;
+    busBuffer[153] = testedVal1;
+    busBuffer[156] = testedVal2;
+
+    done = false;
+    std::thread thr1(RsBusServerTest);
+    std::thread thr2(BusGateSendModbusAdu);
+
+    BusGate::Init spgInit{testedConfig};
+    BusGate spgate(spgInit);
+    int cnt = 2048;
+    while (cnt--)
+    {
+        spgate.tickInd();
+        Utils::nsleep(TickUtils::getTickPeriod());
+    }
+
+    done = true;
+    thr1.join();
+    thr2.join();
+
+    float rcvdValue0 = Utils::reverse(*((float*)  &clientRegisters[0]));
+    float rcvdValue1 = Utils::reverse(*((float*)  &clientRegisters[4]));
+    float rcvdValue2 = Utils::reverse(*((float*)  &clientRegisters[8]));
+
+    EXPECT_NEAR(rcvdValue0, testedVal0, 1e-4);
+    EXPECT_EQ(clientRegisters[2], GateReadItemResult::ready);
+
+    EXPECT_NEAR(rcvdValue1, testedVal1, 1e-4);
+    EXPECT_EQ(clientRegisters[6], GateReadItemResult::ready);
+
+    EXPECT_NEAR(rcvdValue2, testedVal2, 1e-4);
+    EXPECT_EQ(clientRegisters[10], GateReadItemResult::ready);
+
+    EXPECT_EQ(clientStats.nTx, clientStats.nRx);
+    EXPECT_EQ(0, clientStats.nError);
+    EXPECT_EQ(0, clientStats.nInvalid);
+}
 
 #if 0
 #include "gtest/gtest.h"

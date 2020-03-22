@@ -6,6 +6,9 @@
 namespace sg
 {
 
+namespace rsbus
+{
+
 RsBusRx::RsBusRx(Link& l)
     : link(l)
 {
@@ -60,4 +63,5 @@ int RsBusRx::receive(unsigned char* buf, unsigned int maxLen)
     return rxLen;
 }
 
+}
 }

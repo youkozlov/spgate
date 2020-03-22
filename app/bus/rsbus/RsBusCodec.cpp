@@ -2,11 +2,10 @@
 #include "utils/Logger.hpp"
 #include "utils/WrapBuffer.hpp"
 
-
 namespace sg
 {
 
-namespace
+namespace rsbus
 {
 
 uint8_t calcCs(RsBusFrame const& frame, uint8_t dataLen)
@@ -14,7 +13,6 @@ uint8_t calcCs(RsBusFrame const& frame, uint8_t dataLen)
     uint16_t sum = frame.nt + frame.rc;
     while (dataLen--)
     {
-        LM(LE, "dataLen=%u", dataLen);
         sum += frame.data[dataLen];
     }
     return ~sum;
@@ -28,8 +26,6 @@ bool validateNt(uint8_t nt)
         return false;
     }
     return true;
-}
-
 }
 
 /*
@@ -50,104 +46,47 @@ RsBusCodec::RsBusCodec(WrapBuffer& b, RsBusFrame& f)
 {
 }
 
-bool RsBusCodec::encodeStartSequence()
-{
-    for (int i = 0; i < 16; i += 1)
-    {
-        buf.write(0xFF);
-    }
-    return true;
-}
+// session request
+//
+// 10Н NT 3FH 00H 00H 00H 00H КС 16Н
 
+// session respond 941
 //
-// 10Н
-// NT
-// 3FH
-// 00H
-// 00H
-// 00H
-// 00H
-// КС
-// 16Н
+// 10Н NT 3FH 54H 29Н 00Н КС 16Н
+
+// data request
 //
-bool RsBusCodec::encodeSessionReq()
+// 10Н NT 52Н А1 А0 Кб 00H КС 16Н
+
+// data respond
+//
+// 10Н NT 52Н [ДампОЗУ 4 байта] КС 16Н
+
+bool RsBusCodec::encode()
 {
     if (!validateNt(frame.nt))
     {
-        return false;
-    }
-
-    buf.write(FSC);
-    buf.write(frame.nt);
-    buf.write(0x3F);
-    buf.write(0x00);
-    buf.write(0x00);
-    buf.write(0x00);
-    buf.write(0x00);
-    buf.write(calcCs(frame, dataRequestLength));
-    buf.write(FEC);
-
-    return true;
-}
-
-//
-// 10Н
-// NT
-// 52Н
-// А1
-// А0
-// Кб
-// 00H
-// КС
-// 16Н
-//
-bool RsBusCodec::encodeDataReq()
-{
-    if (!validateNt(frame.nt))
-    {
-        return false;
-    }
-
-    if (frame.rc != RDRAM)
-    {
-        LM(LE, "Unsupported function=%02X", frame.rc);
         return false;
     }
 
     buf.write(FSC);
     buf.write(frame.nt);
     buf.write(frame.rc);
-    buf.write(frame.a1);
-    buf.write(frame.a0);
-    buf.write(frame.qty);
-    buf.write(0x00);
-    buf.write(calcCs(frame, dataRequestLength));
+    buf.write(frame.data, frame.qty);
+    buf.write(calcCs(frame, frame.qty));
     buf.write(FEC);
 
     return true;
 }
 
-//
-// 10Н
-// NT
-// 3FH
-// 54H
-// 29Н
-// 00Н
-// КС
-// 16Н
-//
-bool RsBusCodec::decodeSessionRsp()
+bool RsBusCodec::decode()
 {
-    if (buf.capacity() != 8)
+    unsigned char ch;
+    if (!buf.read(ch))
     {
-        LM(LE, "Invalid length of session respond: %u", buf.capacity());
+        LM(LE, "Unexpected tb end");
         return false;
     }
-
-    unsigned char ch;
-
-    buf.read(ch);
 
     if (ch != FSC)
     {
@@ -155,66 +94,55 @@ bool RsBusCodec::decodeSessionRsp()
         return false;
     }
 
-    buf.read(frame.nt);
+    if (!buf.read(frame.nt))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
 
-    buf.read(frame.rc);
+    if (!validateNt(frame.nt))
+    {
+        return false;
+    }
 
-    buf.read(frame.data[0]);
+    if (!buf.read(frame.rc))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
 
-    buf.read(frame.data[1]);
+    frame.qty = 0;
+    while ((buf.size() + 2) < buf.capacity())
+    {
+        buf.read(frame.data[frame.qty++]);
+    }
 
-    buf.read(frame.data[2]);
+    if (!buf.read(ch))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    uint8_t const expKc = calcCs(frame, frame.qty);
+    if (ch != expKc)
+    {
+        LM(LE, "Given KC is incorrect: %02X, expected KC: %02X", ch, expKc);
+        return false;
+    }
+
+    if (!buf.read(ch))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    if (ch != FEC)
+    {
+        LM(LE, "Unexpected end symbol: %02X", ch);
+        return false;
+    }
 
     return true;
 }
-
-// 10Н
-// NT
-// 52Н
-// ДампОЗУ 0 байт
-// ДампОЗУ 1 байт
-// ДампОЗУ 2 байт
-// ДампОЗУ 3 байт
-// КС
-// 16Н
-
-bool RsBusCodec::decodeDataRsp()
-{
-    if (buf.capacity() != 9)
-    {
-        LM(LE, "Unexpected length of data respond: %u", buf.capacity());
-        return false;
-    }
-
-    unsigned char ch;
-
-    buf.read(ch);
-
-    if (ch != FSC)
-    {
-        LM(LE, "Unexpected start symbol: %02X", ch);
-        return false;
-    }
-
-    buf.read(frame.nt);
-
-    buf.read(frame.rc);
-
-    if (frame.rc != RDRAM)
-    {
-        LM(LE, "Unsupported function=%02X", frame.rc);
-        return false;
-    }
-
-    buf.read(frame.data[0]);
-
-    buf.read(frame.data[1]);
-
-    buf.read(frame.data[2]);
-
-    buf.read(frame.data[3]);
-
-    return true;
 }
-
 }

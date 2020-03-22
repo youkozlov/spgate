@@ -1,17 +1,24 @@
 #include "RsBusFsm.hpp"
 #include "RsBus.hpp"
+#include "RsBusDefs.hpp"
 #include "utils/Logger.hpp"
 
 namespace sg
 {
 
-constexpr unsigned int recvTimeoutMs  = 2000;
-constexpr unsigned int errorTimeoutMs = 5000;
+namespace rsbus
+{
+
+constexpr unsigned int startSeqSendPeriodMs = 5;
+constexpr unsigned int recvTimeoutMs        = 2000;
+constexpr unsigned int errorTimeoutMs       = 5000;
 
 RsBusFsm::RsBusFsm(RsBus& b)
     : bus(b)
     , state(State::init)
     , tick(0)
+    , startSequenceCounter(0)
+    , sendStartSeqTimer(startSeqSendPeriodMs)
     , recvTimer(recvTimeoutMs)
     , idleTimer(bus.period())
     , errorTimer(errorTimeoutMs)
@@ -76,21 +83,33 @@ void RsBusFsm::connect()
     }
     else
     {
+        startSequenceCounter = 0;
+        sendStartSeqTimer.set();
         changeState(State::sendStartSequence);
     }
 }
 
 void RsBusFsm::sendStartSequence()
 {
+    if (not sendStartSeqTimer.isExpired())
+    {
+        return;
+    }
+
     if (bus.sendStartSequence() < 0)
     {
         bus.reset();
         errorTimer.set();
         changeState(State::error);
     }
-    else
+    else if (startSequenceCounter >= startSequenceLength)
     {
         changeState(State::sendSessionReq);
+    }
+    else
+    {
+        sendStartSeqTimer.set();
+        startSequenceCounter += 1;
     }
 }
 
@@ -187,13 +206,15 @@ void RsBusFsm::timeout()
 {
     if (timeoutTimer.isExpired())
     {
+        startSequenceCounter = 0;
+        sendStartSeqTimer.set();
         changeState(State::sendStartSequence);
     }
 }
 
 void RsBusFsm::changeState(State newSt)
 {
-    LM(LI, "Change state: %s -> %s", toString(state), toString(newSt));
+    LM(LD, "Change state: %s -> %s", toString(state), toString(newSt));
     state = newSt;
 }
 
@@ -226,4 +247,5 @@ char const* RsBusFsm::toString(State st) const
     }
 }
 
+}
 }

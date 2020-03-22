@@ -115,8 +115,8 @@ bool BusGate::createGates()
             break;
             case GateType::m4:
             {
-                RsBusClient::Init init{it, parser, regAccessor, rsbusStats};
-                gates[i] = std::unique_ptr<Bus>(new RsBusClient(init));
+                rsbus::RsBusClient::Init init{it, parser, regAccessor, rsbusStats};
+                gates[i] = std::unique_ptr<Bus>(new rsbus::RsBusClient(init));
             }
             break;
             }

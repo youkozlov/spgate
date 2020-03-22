@@ -5,6 +5,9 @@
 namespace sg
 {
 
+namespace rsbus
+{
+
 class RsBus;
 
 class RsBusFsm
@@ -48,10 +51,13 @@ private:
     RsBus& bus;
     State  state;
     int    tick;
+    int    startSequenceCounter;
+    Timer  sendStartSeqTimer;
     Timer  recvTimer;
     Timer  idleTimer;
     Timer  errorTimer;
     Timer  timeoutTimer;
 };
 
+}
 }

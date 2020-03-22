@@ -3,7 +3,7 @@
 #include "stdlib.h"
 #include <ctime>
 
-#define DEFAULT_LOG_OUTPUT DISABLED
+#define DEFAULT_LOG_OUTPUT CON
 #define DEFAULT_LOG_LEVEL  LE
 #define DEFAULT_LOG_FILE   "/tmp/spgate.log"
 

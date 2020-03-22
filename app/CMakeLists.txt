@@ -20,6 +20,7 @@ add_library(app
     bus/spbus/SpBusCodec.cpp
     bus/spbus/SpBusRx.cpp
     bus/spbus/SpBusServer.cpp
+    bus/rsbus/RsBusServer.cpp
     bus/rsbus/RsBusClient.cpp
     bus/rsbus/RsBusFsm.cpp
     bus/rsbus/RsBusCodec.cpp
