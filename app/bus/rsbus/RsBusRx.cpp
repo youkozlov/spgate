@@ -25,27 +25,21 @@ int RsBusRx::receive(unsigned char* buf, unsigned int maxLen)
 {
     unsigned int rxLen = 0;
 
-    int len = link.read(buf, 3, 300);
+    bool isFscRcvd = false;
 
-    if (!len)
+    uint8_t sum = 0;
+
+    while (1)
     {
-        return len;
-    }
-    else if (len < 0)
-    {
-        return len;
-    }
+        int len = link.read(&buf[rxLen], 1, 300);
 
-    rxLen += len;
-
-    uint16_t sum = 0;
-
-    do
-    {
-        if (link.read(&buf[rxLen], 1, 50) != 1)
+        if (!len)
         {
-            LM(LE, "Function result is unexpected");
-            return invalid;
+            return len;
+        }
+        else if (len < 0)
+        {
+            return len;
         }
 
         rxLen += 1;
@@ -56,11 +50,21 @@ int RsBusRx::receive(unsigned char* buf, unsigned int maxLen)
             return invalid;
         }
 
-        sum += buf[rxLen - 3];
+        if (isFscRcvd && buf[rxLen - 1] == FEC && sum == 0xff)
+        {
+            return rxLen;
+        }
+        else if (!isFscRcvd && buf[rxLen - 1] == FSC)
+        {
+            isFscRcvd = true;
+        }
+        else if (isFscRcvd)
+        {
+            sum += buf[rxLen - 1];
+        }
     }
-    while (not (buf[rxLen - 1] == FEC && buf[rxLen - 2] == static_cast<uint8_t>(~sum)));
 
-    return rxLen;
+    return invalid;
 }
 
 }
