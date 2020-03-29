@@ -17,13 +17,8 @@ add_subdirectory(externals)
 
 add_subdirectory(tests)
 
-add_library(platform 
-    rlcutil.cpp
-    rlinifile.cpp
-    rlsocket.cpp
-    rlthread.cpp
-    rlwthread.cpp
-)
+add_executable(app_main
+    main.cpp
+    )
 
-target_include_directories(app PUBLIC ./)
-
+target_link_libraries(app_main app pthread)

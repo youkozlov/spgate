@@ -120,7 +120,7 @@ bool ParamParser::parseFile(char const* fileName)
     rlIniFile iniParser;
     if (iniParser.read(fileName))
     {
-        LM(LE, "IniParser can't complete read");
+        LM(LE, "IniParser can't read file: %s", fileName);
         return false;
     }
     try

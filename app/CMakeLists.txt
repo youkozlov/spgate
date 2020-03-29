@@ -33,4 +33,4 @@ add_library(app
     
 target_include_directories(app PUBLIC . interfaces bus)
 
-target_link_libraries(app platform)
+target_link_libraries(app rl)
