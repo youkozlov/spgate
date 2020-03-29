@@ -7,5 +7,5 @@ add_library(rl
     rlwthread.cpp
 )
 
-target_include_directories(app PUBLIC .)
+target_include_directories(rl PUBLIC .)
 

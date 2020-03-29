@@ -4,7 +4,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DEBUG -O0 -g -ggdb -Wextra -Wall -Wpeda
 
 add_definitions( -DGTEST_HAS_PTHREAD=1 )
 
-add_executable(app_ut
+add_executable(spgate_ut
     BusGateTest.cpp
     SpBusClientTest.cpp
     ModbusServerTest.cpp
@@ -12,4 +12,4 @@ add_executable(app_ut
     UtilsTest.cpp
     )
 
-target_link_libraries(app_ut gmock gmock_main gtest gtest_main app)
+target_link_libraries(spgate_ut gmock gmock_main gtest gtest_main common)

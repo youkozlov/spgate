@@ -2,7 +2,7 @@
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DEBUG -O0 -g -ggdb -Wextra -Wall -Wpedantic -fno-omit-frame-pointer -fasynchronous-unwind-tables -fpie -fpic -fstack-protector -pipe -Werror=format-security")
 #-fsanitize=address -fsanitize=leak -fsanitize=undefined
 
-add_library(app
+add_library(common
 
     utils/Logger.cpp
     utils/Utils.cpp
@@ -29,8 +29,8 @@ add_library(app
     bus/RegAccessor.cpp
 
     BusGate.cpp
-    ) 
-    
-target_include_directories(app PUBLIC . interfaces bus)
+    )
 
-target_link_libraries(app rl)
+target_include_directories(common PUBLIC . interfaces bus)
+
+target_link_libraries(common rl)
