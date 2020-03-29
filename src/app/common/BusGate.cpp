@@ -101,21 +101,21 @@ bool BusGate::createGates()
 
     for (unsigned int i = 0; i < parser.getNumGates(); ++i)
     {
-        auto& it = parser.getGate(i);
+        sg::GateParams const& gatePrms = parser.getGate(i);
 
         try
         {
-            switch (it.gateType)
+            switch (gatePrms.gateType)
             {
             case GateType::sps:
             {
-                SpBusClient::Init init{it, parser, regAccessor, spbusStats};
+                SpBusClient::Init init{gatePrms, parser, regAccessor, spbusStats};
                 gates[i] = std::unique_ptr<Bus>(new SpBusClient(init));
             }
             break;
             case GateType::m4:
             {
-                rsbus::RsBusClient::Init init{it, parser, regAccessor, rsbusStats};
+                rsbus::RsBusClient::Init init{gatePrms, parser, regAccessor, rsbusStats};
                 gates[i] = std::unique_ptr<Bus>(new rsbus::RsBusClient(init));
             }
             break;

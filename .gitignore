@@ -4,3 +4,4 @@ build_cmake
 spgate
 Makefile
 *.o
+spgate.code-workspace

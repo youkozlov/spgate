@@ -10,7 +10,7 @@ namespace rsbus
 
 uint8_t calcCs(RsBusFrame const& frame, uint8_t dataLen)
 {
-    uint16_t sum = frame.nt + frame.rc;
+    uint8_t sum = frame.nt + frame.rc;
     while (dataLen--)
     {
         sum += frame.data[dataLen];
