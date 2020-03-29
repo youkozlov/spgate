@@ -8,6 +8,7 @@ Application should configured with the *.ini file, where you have to define spbu
 
 ## Build and execution unit tests:
 
+```html 
 $ git clone https://github.com/youkozlov/spgate.git
 $ cd spgate
 $ git submodule update --init
@@ -16,3 +17,4 @@ $ cd build_cmake
 $ cmake ..
 $ make
 $ bin/spgate_ut
+```
