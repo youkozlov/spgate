@@ -28,6 +28,19 @@ add_library(common
     bus/GateStorage.cpp
     bus/RegAccessor.cpp
 
+    cli/Cli.cpp
+    cli/TelnetServer.cpp
+    cli/TelnetPrinter.cpp
+    cli/CmdProcessor.cpp
+    cli/cmds/CmdParamParser.cpp
+    cli/cmds/CmdParamFormater.cpp
+    cli/cmds/CmdExit.cpp
+    cli/cmds/CmdShutdown.cpp
+    cli/cmds/CmdInfo.cpp
+    cli/cmds/CmdLog.cpp
+    cli/cmds/CmdArgLogLevel.cpp
+    cli/cmds/CmdStats.cpp
+
     BusGate.cpp
     )
 

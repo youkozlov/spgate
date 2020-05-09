@@ -42,6 +42,8 @@ public:
 
     LogLevel currentLogLevel() const;
 
+    void setLogLevel(LogLevel);
+
 private:
     Logger();
     ~Logger();
@@ -51,7 +53,7 @@ private:
 
     ::FILE *fp;
     const LogOutput logOutput;
-    const LogLevel  logLevel;
+    LogLevel        logLevel;
     const char*     logFileName;
 };
 

@@ -4,7 +4,7 @@
 #include <ctime>
 
 #define DEFAULT_LOG_OUTPUT CON
-#define DEFAULT_LOG_LEVEL  LE
+#define DEFAULT_LOG_LEVEL  LD
 #define DEFAULT_LOG_FILE   "/tmp/spgate.log"
 
 namespace sg
@@ -130,6 +130,11 @@ Logger& Logger::getInst()
 LogLevel Logger::currentLogLevel() const
 {
     return logLevel;
+}
+
+void Logger::setLogLevel(LogLevel lvl)
+{
+    logLevel = lvl;
 }
 
 void Logger::dispatch(char const* msg, LogLevel lvl, char const* file, int line)

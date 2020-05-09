@@ -14,6 +14,20 @@ void Utils::nsleep(unsigned long ns)
     nanosleep(&tv, NULL);
 }
 
+unsigned int Utils::adler32(void const *buffer, unsigned int buflength)
+{
+    unsigned char const* buf = (unsigned char const*)buffer;
+
+    unsigned int s1 = 1;
+    unsigned int s2 = 0;
+    for (unsigned int i = 0; i < buflength; ++i)
+    {
+       s1 = (s1 + buf[i]) % 65521;
+       s2 = (s2 + s1) % 65521;
+    }
+    return (s2 << 16) | s1;
+}
+
 int Utils::crcode(unsigned char const* msg, int len)
 {
     int crc = 0;

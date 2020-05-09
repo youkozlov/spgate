@@ -81,6 +81,16 @@ public:
         pos += length;
     }
 
+    void write(void const* buf, unsigned int length)
+    {
+        if (pos + length >= len)
+        {
+            return;
+        }
+        memcpy(&ptr[pos], buf, length);
+        pos += length;
+    }
+
     void writeBe(int ch)
     {
         ptr[pos++] = ch >> 8;

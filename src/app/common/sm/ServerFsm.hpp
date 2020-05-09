@@ -22,6 +22,8 @@ public:
     ~ServerFsm();
 
     void tickInd();
+    
+    void close();
 
 private:
     void init();

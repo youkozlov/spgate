@@ -9,6 +9,7 @@ add_executable(spgate_ut
     SpBusClientTest.cpp
     ModbusServerTest.cpp
     ParamParserTest.cpp
+    CmdParamParserTest.cpp
     UtilsTest.cpp
     )
 

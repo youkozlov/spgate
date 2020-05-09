@@ -1,5 +1,7 @@
 #include "BusGate.hpp"
 
+#include "cli/Cli.hpp"
+
 #include "sockets/LinkAcceptorRl.hpp"
 #include "modbus/ModbusServer.hpp"
 
@@ -25,25 +27,39 @@ BusGate::~BusGate()
 {
 }
 
-void BusGate::tickInd()
+int BusGate::tickInd()
 {
     switch (state)
     {
     case BusGateState::init:
         processInit();
-    return;
+    return 0;
     case BusGateState::run:
         processRun();
-    return;
+    return 0;
     case BusGateState::error:
         processError();
-    return;
+    return 0;
+    case BusGateState::shutdown:
+    return 1;
     }
+    return 1;
+}
+
+void BusGate::shutdown()
+{
+    chageState(BusGateState::shutdown);
 }
 
 void BusGate::processInit()
 {
     if (!parser.parseFile(iniFileName))
+    {
+        chageState(BusGateState::error);
+        return;
+    }
+
+    if (!createCli())
     {
         chageState(BusGateState::error);
         return;
@@ -72,10 +88,20 @@ void BusGate::processRun()
         gate->tickInd();
     }
     modbus->tickInd();
+    cli->tickInd();
 }
 
 void BusGate::processError()
 {
+}
+
+bool BusGate::createCli()
+{
+    IpAddr ipAddr{"127.0.0.1", 10000};
+    cli::Cli::Init init{ipAddr, *this};
+    cli = std::unique_ptr<cli::Cli>(new cli::Cli(init));
+
+    return true;
 }
 
 bool BusGate::createModbus()
@@ -152,6 +178,8 @@ char const* BusGate::toString(BusGateState st) const
         return "Run";
     case BusGateState::error:
         return "Error";
+    case BusGateState::shutdown:
+        return "Shutdown";
     default:
         return "Invalid";
     }

@@ -39,6 +39,15 @@ void ServerFsm::tickInd()
     tick += 1;
 }
 
+void ServerFsm::close()
+{
+    if (ServerFsmState::process == state)
+    {
+        server.reset();
+        changeState(ServerFsmState::error);
+    }
+}
+
 void ServerFsm::init()
 {
     if (tick % 128 == 0)

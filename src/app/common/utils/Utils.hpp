@@ -9,7 +9,9 @@ class Utils
 public:
     
     static void nsleep(unsigned long = 1000 * 1000);
-    
+
+    static unsigned int adler32(void const *, unsigned int);
+
     static int  crcode(unsigned char const*, int);
     
     template<typename T, unsigned int SIZE>
