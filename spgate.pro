@@ -6,6 +6,9 @@ TEMPLATE = app
 TARGET = spgate
 CONFIG += release c++11 warn_on
 
+DESTDIR = build
+OBJECTS_DIR = build
+
 INCLUDEPATH += . \
            externals/rl \
            src/app \
