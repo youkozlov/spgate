@@ -48,6 +48,12 @@ public:
 
     BusGateState getState() const;
 
+    ModbusStats const& getModbusStats() const;
+
+    BusStats const& getSpBusStats() const;
+
+    BusStats const& getRsBusStats() const;
+
 private:
     bool validateTags();
     void processInit();

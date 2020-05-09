@@ -168,6 +168,21 @@ BusGateState BusGate::getState() const
     return state;
 }
 
+ModbusStats const& BusGate::getModbusStats() const
+{
+    return modbusStats;
+}
+
+BusStats const& BusGate::getSpBusStats() const
+{
+    return spbusStats;
+}
+
+BusStats const& BusGate::getRsBusStats() const
+{
+    return rsbusStats;
+}
+
 char const* BusGate::toString(BusGateState st) const
 {
     switch (st)

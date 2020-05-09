@@ -3,14 +3,13 @@
 #include "utils/WrapBuffer.hpp"
 #include "CmdParamFormater.hpp"
 #include "CmdParamParser.hpp"
+#include "CmdDefs.hpp"
 #include <sstream>
 
 namespace sg
 {
 namespace cli
 {
-
-char const* invalidCommandArguments = "\r\n?Invalid command arguments\r\n";
 
 CmdLog::CmdLog()
 {

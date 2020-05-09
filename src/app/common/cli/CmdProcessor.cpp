@@ -3,6 +3,7 @@
 #include "cmds/CmdShutdown.hpp"
 #include "cmds/CmdInfo.hpp"
 #include "cmds/CmdLog.hpp"
+#include "cmds/CmdStats.hpp"
 #include "cmds/CmdParamParser.hpp"
 #include "Cli.hpp"
 #include "utils/Utils.hpp"
@@ -25,9 +26,10 @@ CmdProcessor::CmdProcessor(Init const& init)
     : cli(init.cli)
 {
     cmds[getHash(CmdExit::getName())]     = std::unique_ptr<Cmd>(new CmdExit(init.cli));
-    cmds[getHash(CmdShutdown::getName())] = std::unique_ptr<CmdShutdown>(new CmdShutdown(init.cli));
-    cmds[getHash(CmdInfo::getName())]     = std::unique_ptr<CmdInfo>(new CmdInfo);
-    cmds[getHash(CmdLog::getName())]      = std::unique_ptr<CmdLog>(new CmdLog);
+    cmds[getHash(CmdShutdown::getName())] = std::unique_ptr<Cmd>(new CmdShutdown(init.cli));
+    cmds[getHash(CmdInfo::getName())]     = std::unique_ptr<Cmd>(new CmdInfo);
+    cmds[getHash(CmdLog::getName())]      = std::unique_ptr<Cmd>(new CmdLog);
+    cmds[getHash(CmdStats::getName())]    = std::unique_ptr<Cmd>(new CmdStats(init.cli));
 }
 
 CmdProcessor::~CmdProcessor()

@@ -50,5 +50,20 @@ void Cli::error()
 {
 }
 
+ModbusStats const& Cli::getModbusStats() const
+{
+    return bg.getModbusStats();
+}
+
+BusStats const& Cli::getSpBusStats() const
+{
+    return bg.getSpBusStats();
+}
+
+BusStats const& Cli::getRsBusStats() const
+{
+    return bg.getRsBusStats();
+}
+
 } // namespace cli
 } // namespace sg

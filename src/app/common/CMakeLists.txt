@@ -40,6 +40,8 @@ add_library(common
     cli/cmds/CmdLog.cpp
     cli/cmds/CmdArgLogLevel.cpp
     cli/cmds/CmdStats.cpp
+    cli/cmds/CmdArgStatsType.cpp
+    cli/cmds/CmdStatsFormater.cpp
 
     BusGate.cpp
     )
