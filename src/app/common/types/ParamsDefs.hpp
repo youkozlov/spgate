@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstring>
 #include "IpAddr.hpp"
 
 namespace sg
@@ -30,6 +31,11 @@ struct GateParams
     IpAddr       gateAddr;
     BusAddr      addr;
     unsigned int readPeriod;
+    
+    GateParams()
+    {
+        std::memset(this, 0, sizeof(GateParams));
+    }
 };
 
 struct DeviceParams
@@ -37,6 +43,11 @@ struct DeviceParams
     unsigned int id;
     unsigned int gateId;
     BusAddr      addr;
+
+    DeviceParams()
+    {
+        std::memset(this, 0, sizeof(DeviceParams));
+    }
 };
 
 enum class ParamType
@@ -53,6 +64,11 @@ struct ParamParams
     unsigned int chan;
     ParamAddr    addr;
     ParamType    type;
+
+    ParamParams()
+    {
+        std::memset(this, 0, sizeof(ParamParams));
+    }
 };
 
 }

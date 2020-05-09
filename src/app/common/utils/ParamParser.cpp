@@ -241,7 +241,7 @@ bool ParamParser::parseGates(rlIniFile& parser, char const* gateName)
         return false;
     }
 
-    GateParams prms{};
+    GateParams prms;
 
     if (!parseSectionId(prms.id, gateName))
     {
@@ -283,7 +283,7 @@ bool ParamParser::parseDevices(rlIniFile& parser, char const* deviceName)
         return false;
     }
     
-    DeviceParams prms{};
+    DeviceParams prms;
 
     if (!parseSectionId(prms.id, deviceName))
     {
@@ -313,7 +313,7 @@ bool ParamParser::parseParams(rlIniFile& parser, char const* paramName)
         return false;
     }
     
-    ParamParams prms{};
+    ParamParams prms;
 
     if (!parseSectionId(prms.id, paramName))
     {

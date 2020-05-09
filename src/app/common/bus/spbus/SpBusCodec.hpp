@@ -1,5 +1,7 @@
 #pragma once
 
+#include "cstring"
+
 namespace sg
 {
 
@@ -49,6 +51,11 @@ struct SpBusFrame
 {
     SpBusHeader  hdr;
     SpBusDataSet data;
+
+    SpBusFrame()
+    {
+        std::memset(this, 0, sizeof(SpBusFrame));
+    }
 };
 
 class SpBusCodec

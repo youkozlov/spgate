@@ -203,7 +203,7 @@ int RsBusServer::recvSessionReq()
 
     WrapBuffer rxBuf(&rawBuffer[0], len);
 
-    RsBusFrame frame{};
+    RsBusFrame frame;
 
     RsBusCodec codec(rxBuf, frame);
 
@@ -264,7 +264,7 @@ int RsBusServer::recvDataReq()
 
     WrapBuffer rxBuf(&rawBuffer[0], len);
 
-    RsBusFrame frame{};
+    RsBusFrame frame;
 
     RsBusCodec codec(rxBuf, frame);
 

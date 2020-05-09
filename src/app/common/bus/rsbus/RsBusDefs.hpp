@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstring>
 #include <cstdint>
 
 namespace sg
@@ -34,6 +35,11 @@ struct RsBusFrame
     uint8_t rc;
     uint8_t qty;
     uint8_t data[maxDataBlockLength];
+
+    RsBusFrame()
+    {
+        std::memset(this, 0, sizeof(RsBusFrame));
+    }
 };
 
 }

@@ -70,7 +70,7 @@ int SpBusServer::process()
         return 1;
     }
 
-    SpBusFrame frame{};
+    SpBusFrame frame;
     {
         SpBusCodec codec(rxBuf, frame);
         if (!codec.decode())

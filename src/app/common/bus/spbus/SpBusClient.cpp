@@ -50,7 +50,7 @@ int SpBusClient::send()
     auto& device = item.device;
     auto& prms   = item.prms;
 
-    SpBusFrame frame{};
+    SpBusFrame frame;
 
     frame.hdr.dad = device.addr;
     frame.hdr.sad = gateParams.addr;
@@ -126,7 +126,7 @@ int SpBusClient::receive()
     float   floatValue;
     int32_t fixedValue;
 
-    SpBusFrame frame{};
+    SpBusFrame frame;
 
     int len = receiveFrame(frame);
 

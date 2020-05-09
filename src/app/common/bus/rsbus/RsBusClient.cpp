@@ -63,7 +63,7 @@ int RsBusClient::sendSessionReq()
 
     WrapBuffer txBuf(&rawBuffer[0], rawBuffer.size());
 
-    RsBusFrame frame{};
+    RsBusFrame frame;
     frame.nt      = device.addr;
     frame.rc      = SRC;
     frame.data[0] = 0x00;
@@ -104,7 +104,7 @@ int RsBusClient::recvSessionRsp()
 
     WrapBuffer rxBuf(&rawBuffer[0], len);
 
-    RsBusFrame frame{};
+    RsBusFrame frame;
 
     RsBusCodec codec(rxBuf, frame);
 
@@ -160,7 +160,7 @@ int RsBusClient::sendDataReq()
     }
 
     WrapBuffer txBuf(&rawBuffer[0], rawBuffer.size());
-    RsBusFrame frame{};
+    RsBusFrame frame;
     frame.nt      = device.addr;
     frame.rc      = prms.func;
     frame.data[0] = prms.addr;
@@ -205,7 +205,7 @@ int RsBusClient::recvDataRsp()
 
     WrapBuffer rxBuf(&rawBuffer[0], len);
 
-    RsBusFrame frame{};
+    RsBusFrame frame;
 
     RsBusCodec codec(rxBuf, frame);
 
