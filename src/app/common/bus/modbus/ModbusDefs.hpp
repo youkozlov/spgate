@@ -48,6 +48,11 @@ struct ModbusStats
     uint32_t nRd;
     uint32_t nWr;
     uint32_t nMultiWr;
+
+    ModbusStats()
+    {
+        memset(this, 0, sizeof(*this));
+    }
 };
 
 inline bool operator==(ModbusStats const& a, ModbusStats const& b)

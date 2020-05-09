@@ -14,15 +14,15 @@ using namespace sg;
 
 static unsigned int testPort = 9999;
 static std::atomic<bool> done;
-static ModbusStats clientStats = {};
-static ModbusStats serverStats = {};
+static ModbusStats clientStats;
+static ModbusStats serverStats;
 static Buffer<uint16_t> clientRegisters;
 static Buffer<uint16_t> serverRegisters;
 
 void clearStats()
 {
-    clientStats = ModbusStats{};
-    serverStats = ModbusStats{};
+    clientStats = ModbusStats();
+    serverStats = ModbusStats();
 }
 
 void clearRegisters()

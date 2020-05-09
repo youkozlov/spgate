@@ -64,7 +64,7 @@ private:
     BusGateState                    state;
     ParamParser                     parser;
     
-    ModbusStats                     modbusStats{};
+    ModbusStats                     modbusStats;
 
     Buffer<uint16_t>                modbusRegs;
     RegAccessor                     regAccessor;

@@ -31,7 +31,7 @@ int main(int argc, char** argv)
         {"../cfg/default.ini"},
         {"3"},
         {"2"},
-        {"/tmp/spgate.log"},
+        {"/tmp/spgate.log"}
     };
 
     int option_index = 0;

@@ -22,7 +22,7 @@ static std::atomic<bool> done;
 static Buffer<float>     busBuffer;
 
 static unsigned int      testPortModbus = 12345;
-static ModbusStats       clientStats{};
+static ModbusStats       clientStats;
 static Buffer<uint16_t>  clientRegisters;
 
 void SpBusServerTest()
