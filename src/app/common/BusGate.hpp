@@ -71,8 +71,8 @@ private:
     std::unique_ptr<cli::Cli>       cli;
     std::unique_ptr<LinkAcceptorRl> linkAcceptor;
     std::unique_ptr<ModbusServer>   modbus;
-    BusStats                                      spbusStats{};
-    BusStats                                      rsbusStats{};
+    BusStats                                      spbusStats;
+    BusStats                                      rsbusStats;
     std::array<std::unique_ptr<Bus>, maxNumGates> gates;
 
 };

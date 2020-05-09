@@ -31,7 +31,7 @@ bool ModbusClient::exec(ModbusRequest const& req)
         return false;
     }
     
-    storedAdu = {};
+    storedAdu = ModbusTcpAdu();
     storedAdu.startReg = req.startReg;
     storedAdu.numRegs = req.numRegs;
     storedAdu.slaveAddr = req.slaveAddr;
@@ -154,7 +154,7 @@ void ModbusClient::processError()
 
 ModbusTcpAdu ModbusClient::parseAdu(WrapBuffer& msgBuf)
 {
-    ModbusTcpAdu adu{};
+    ModbusTcpAdu adu;
     
     adu.transactionId = msgBuf.readBe();
     adu.protocolId = msgBuf.readBe();

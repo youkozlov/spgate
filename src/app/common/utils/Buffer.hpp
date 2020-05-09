@@ -36,7 +36,7 @@ public:
     
 private:
     static constexpr unsigned int capacity = 1024 * 16;
-    std::array<T, capacity> buf{};
+    std::array<T, capacity> buf;
 };
 
 }

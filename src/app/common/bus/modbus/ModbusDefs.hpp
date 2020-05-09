@@ -29,6 +29,11 @@ struct ModbusTcpAdu
     uint16_t numRegs;
     uint8_t  slaveAddr;
     uint8_t  fc;
+
+    ModbusTcpAdu()
+    {
+        std::memset(this, 0, sizeof(ModbusTcpAdu));
+    }
 };
 
 struct ModbusRequest
@@ -51,7 +56,7 @@ struct ModbusStats
 
     ModbusStats()
     {
-        memset(this, 0, sizeof(*this));
+        std::memset(this, 0, sizeof(ModbusStats));
     }
 };
 
