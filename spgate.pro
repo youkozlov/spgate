@@ -9,6 +9,7 @@ CONFIG += release c++11 warn_on
 INCLUDEPATH += . \
            externals/rl \
            src/app \
+           src/app/version \
            src/app/common \
            src/app/common/bus
 
