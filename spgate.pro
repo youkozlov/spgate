@@ -6,6 +6,9 @@ TEMPLATE = app
 TARGET = spgate
 CONFIG += release c++11 warn_on
 
+DEFINES += GITABBREF=$$system(git rev-parse --abbrev-ref HEAD)
+DEFINES += GITSHA1=$$system(git rev-parse --short HEAD)
+
 DESTDIR = build
 OBJECTS_DIR = build
 
