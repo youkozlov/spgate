@@ -50,8 +50,6 @@ SOURCES +=  src/app/spgate_main.cpp \
             src/app/common/cli/cmds/CmdLog.cpp \
             src/app/common/cli/cmds/CmdArgLogLevel.cpp \
             src/app/common/cli/cmds/CmdStats.cpp \
-            src/app/common/cli/cmds/CmdArgLogLevel.cpp \
-            src/app/common/cli/cmds/CmdStats.cpp \
             src/app/common/cli/cmds/CmdArgStatsType.cpp \
             src/app/common/cli/cmds/CmdStatsFormater.cpp \
             src/app/common/sm/ClientFsm.cpp \
