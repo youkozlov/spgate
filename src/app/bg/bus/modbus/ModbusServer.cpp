@@ -42,6 +42,7 @@ int ModbusServer::accept()
         return 0;
     }
     link->setHandl(fd);
+    stats.nAcceptConnections += 1;
     return 1;
 }
 
@@ -83,12 +84,14 @@ int ModbusServer::process()
     else
     {
         LM(LE, "Received packet with invalid: len=%d", len);
+        stats.nInvalid += 1;
     }
     return -1;
 }
 
 void ModbusServer::reset()
 {
+    stats.nResetConnections += 1;
     link->close();
 }
 
@@ -102,15 +105,6 @@ bool ModbusServer::sendRespond(WrapBuffer const& msgBuf)
         return false;
     }
     return true;
-}
-
-void ModbusServer::printStats()
-{
-    LM(LD, "ModbusStats: nRx=%u nTx=%u nInvalid=%u nError=%u nRd=%u nWr=%u nMultiWr=%u"
-        , stats.nRx, stats.nTx, stats.nInvalid
-        , stats.nError, stats.nRd, stats.nWr
-        , stats.nMultiWr
-        );
 }
 
 ModbusTcpAdu ModbusServer::parseAdu(WrapBuffer& msgBuf)

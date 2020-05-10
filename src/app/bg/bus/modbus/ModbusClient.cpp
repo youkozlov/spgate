@@ -105,7 +105,8 @@ void ModbusClient::processConnect()
     {
         chageState(ModbusClientState::error);
         return;
-    }    
+    }
+    stats.nAcceptConnections += 1;
     chageState(ModbusClientState::run);
 }
 

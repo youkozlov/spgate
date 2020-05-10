@@ -17,32 +17,42 @@ void fillModbusStats(ModbusStats const& modbusStats, StatsItems& stats)
 {
     std::strcpy(stats.name, "Statistics modbus");
 
-    Item* item = stats.next();
-    std::strcpy(item->name, "nRx");
+    Item* item;
+
+    item = stats.next();
+    std::strcpy(item->name, "nAcceptConnections");
+    item->value = modbusStats.nAcceptConnections;
+
+    item = stats.next();
+    std::strcpy(item->name, "nResetConnections");
+    item->value = modbusStats.nResetConnections;
+
+    item = stats.next();
+    std::strcpy(item->name, "  nRx");
     item->value = modbusStats.nRx;
 
     item = stats.next();
-    std::strcpy(item->name, "nTx");
+    std::strcpy(item->name, "  nTx");
     item->value = modbusStats.nTx;
 
     item = stats.next();
-    std::strcpy(item->name, "nInvalid");
+    std::strcpy(item->name, "  nInvalid");
     item->value = modbusStats.nInvalid;
 
     item = stats.next();
-    std::strcpy(item->name, "nError");
+    std::strcpy(item->name, "  nError");
     item->value = modbusStats.nError;
 
     item = stats.next();
-    std::strcpy(item->name, "nRd");
+    std::strcpy(item->name, "  nRd");
     item->value = modbusStats.nRd;
 
     item = stats.next();
-    std::strcpy(item->name, "nWr");
+    std::strcpy(item->name, "  nWr");
     item->value = modbusStats.nWr;
 
     item = stats.next();
-    std::strcpy(item->name, "nMultiWr");
+    std::strcpy(item->name, "  nMultiWr");
     item->value = modbusStats.nMultiWr;
 }
 

@@ -46,6 +46,8 @@ struct ModbusRequest
 
 struct ModbusStats
 {
+    uint32_t nAcceptConnections;
+    uint32_t nResetConnections;
     uint32_t nRx;
     uint32_t nTx;
     uint32_t nInvalid;

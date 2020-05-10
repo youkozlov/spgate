@@ -13,4 +13,4 @@ add_executable(spgate_ut
     UtilsTest.cpp
     )
 
-target_link_libraries(spgate_ut gmock gmock_main gtest gtest_main common)
+target_link_libraries(spgate_ut gmock gmock_main gtest gtest_main common bg)

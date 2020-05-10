@@ -32,10 +32,10 @@ int main(int argc, char** argv)
         char val[128];
     } items[] = 
     {
-        {"../cfg/default.ini"},
-        {"3"},
-        {"2"},
-        {"/tmp/spgate.log"}
+        {"../cfg/default.ini", false, ""},
+        {"3", false, ""},
+        {"2", false, ""},
+        {"/tmp/spgate.log", false, ""}
     };
 
     int option_index = 0;

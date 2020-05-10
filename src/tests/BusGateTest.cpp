@@ -98,7 +98,7 @@ TEST(BusGateTest, SpBus)
 
     BusGate::Init spgInit{testedConfig};
     BusGate spgate(spgInit);
-    int cnt = 2048;
+    int cnt = 2047;
     while (cnt--)
     {
         spgate.tickInd();
@@ -157,7 +157,7 @@ TEST(BusGateTest, RsBus)
 
     BusGate::Init spgInit{testedConfig};
     BusGate spgate(spgInit);
-    int cnt = 2048;
+    int cnt = 2047;
     while (cnt--)
     {
         spgate.tickInd();

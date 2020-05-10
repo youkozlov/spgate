@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
 #include <memory>
 
 #include "sm/Server.hpp"
@@ -43,8 +42,6 @@ public:
     void reset() final;
 
 private:
-
-    void printStats();
 
     ModbusTcpAdu parseAdu(WrapBuffer&);
     bool processAdu(ModbusTcpAdu const&, WrapBuffer&);
