@@ -9,7 +9,7 @@
 void showUsage(int, char** argv)
 {
     std::cerr << PROJECT_NAME << " " << PROJECT_VER << "\n"
-              << "Build: " << R"foo(GITABBREF-GITSHA1)foo" << "\n"
+              << "Build: " << GIT_BUILD_INFO << "\n"
               << "Usage: " << argv[0] << "\n"
               << "Options:\n"
               << "\t-h,--help\t\tShow this help message\n"
