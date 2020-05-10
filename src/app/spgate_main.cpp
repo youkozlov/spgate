@@ -4,7 +4,10 @@
 #include "BusGate.hpp"
 #include "utils/TickUtils.hpp"
 #include "utils/Utils.hpp"
+
+#ifndef QMAKE_VARIANT
 #include "SpGateConfig.hpp"
+#endif
 
 void showUsage(int, char** argv)
 {
