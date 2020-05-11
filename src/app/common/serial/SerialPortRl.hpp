@@ -1,27 +1,38 @@
 #pragma once
 
 #include "SerialPort.hpp"
-
-class rlSerial;
+#include "rlserial.h"
 
 namespace sg
 {
 
-struct SerialPortSetup;
-
 class SerialPortRl : public SerialPort
 {
 public:
-    explicit SerialPortRl(rlSerial&);
+    struct Init
+    {
+        char const* port;
+        int speed    = B9600;
+        int block    = 0;
+        int rtscts   = 0;
+        int bits     = 8;
+        int stopbits = 2;
+        int parity   = rlSerial::NONE;
+        unsigned startTimeout = 100;
+        unsigned endTimeout = 300;
+    };
+    explicit SerialPortRl(Init const&);
 
-    int setup(SerialPortSetup const&) final;
+    ~SerialPortRl();
+
+    int write(void const*, unsigned int);
     
-    int send(void const*, size_t) final;
-    
-    int receive(void*, size_t) final;
+    int read(void*, unsigned int);
 
 private:
-    rlSerial& serial;
+    rlSerial serial;
+    unsigned const startTimeout;
+    unsigned const endTimeout;
 };
 
 }

@@ -20,6 +20,7 @@ TelnetPrinter::TelnetPrinter(Link& link_, TelnetServer& srv_)
     , optGaEnabled(false)
     , optEchoEnabled(false)
     , optLmEnabled(false)
+    , lastCmdLen(0)
 {
 }
 
@@ -167,6 +168,10 @@ void TelnetPrinter::readLine(unsigned char ch)
     {
         if (lineLen)
         {
+            std::memset(&lastCmd[0], 0, lastCmd.size());
+            std::memcpy(&lastCmd[0], &line[0], lineLen);
+            lastCmdLen = lineLen;
+
             WrapBuffer txBuf(&rawBuffer[0], rawBuffer.size());
         
             line[lineLen] = 0;
@@ -192,7 +197,7 @@ void TelnetPrinter::readLine(unsigned char ch)
     }
     else if (ch < 32 || ch > 126)
     {
-       return;
+        return;
     }
 
     if (optEchoEnabled)
@@ -268,8 +273,14 @@ void TelnetPrinter::readEsc(unsigned char ch)
     changeState(State::readEscOption);
 }
 
-void TelnetPrinter::readEscOption(unsigned char)
+void TelnetPrinter::readEscOption(unsigned char ch)
 {
+    if (ch == 0x41 && lastCmdLen && (std::memcmp(&line[0], &lastCmd[0], lastCmdLen) || lastCmdLen != lineLen))
+    {
+        link.write(&lastCmd[0], lastCmdLen);
+        std::memcpy(&line[0], &lastCmd[0], lastCmdLen);
+        lineLen = lastCmdLen;
+    }
     changeState(State::readLine);
 }
 

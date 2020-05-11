@@ -77,6 +77,10 @@ void fillBusStats(char const* name, BusStats const& busStats, StatsItems& stats)
     item->value = busStats.nError;
 
     item = stats.next();
+    std::strcpy(item->name, "nTimeout");
+    item->value = busStats.nTimeout;
+
+    item = stats.next();
     std::strcpy(item->name, "nRdp");
     item->value = busStats.nRdp;
 

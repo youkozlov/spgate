@@ -1,22 +1,15 @@
 #pragma once
 
-#include <cstddef>
-
 namespace sg
 {
-
-struct SerialPortSetup;
-
 class SerialPort
 {
 public:
     virtual ~SerialPort() {}
+
+    virtual int write(void const*, unsigned int) = 0;
     
-    virtual int setup(SerialPortSetup const&) = 0;
-    
-    virtual int send(void const*, size_t) = 0;
-    
-    virtual int receive(void*, size_t) = 0;
+    virtual int read(void*, unsigned int) = 0;
 };
 
-}
+} // namespace sg

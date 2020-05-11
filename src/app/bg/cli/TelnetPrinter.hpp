@@ -61,6 +61,9 @@ private:
     unsigned char cmd;
 
     std::array<unsigned char, 1024> rawBuffer;
+    
+    std::array<unsigned char, 1024> lastCmd;
+    uint32_t                        lastCmdLen;
 };
 
 } // namespace cli

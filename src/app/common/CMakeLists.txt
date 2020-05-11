@@ -13,6 +13,10 @@ add_library(common
     sm/ServerFsm.cpp
 
     sockets/LinkAcceptorRl.cpp
+    sockets/LinkPool.cpp
+
+    serial/SerialPortRl.cpp
+    serial/SerialPortFile.cpp
 
     )
 
