@@ -9,7 +9,7 @@ CONFIG += release c++11 warn_on
 DEFINES += QMAKE_VARIANT='"\\\"yes\\\""'
 DEFINES += PROJECT_NAME='"\\\"spgate\\\""'
 DEFINES += PROJECT_VER='"\\\"1.0.0\\\""'
-DEFINES += GIT_BUILD_INFO='"\\\"$(shell git rev-parse --abbrev-ref HEAD)-$(shell git rev-parse --short HEAD)\\\""'
+DEFINES += GIT_BUILD_INFO='"\\\"$$system(git diff --quiet || echo dirty)-$$system(git rev-parse --abbrev-ref HEAD)-$$system(git rev-parse --short HEAD)\\\""'
 
 DESTDIR = build
 OBJECTS_DIR = build
@@ -19,9 +19,10 @@ INCLUDEPATH += . \
             src/app \
             src/app/version \
             src/app/common \
-            src/app/common/bus
+            src/app/bg \
+            src/app/bg/bus
 
-SOURCES +=  src/app/spgate_main.cpp \
+SOURCES +=  src/app/bg/spgate_main.cpp \
             externals/rl/rlcutil.cpp \
             externals/rl/rlinifile.cpp \
             externals/rl/rlserial.cpp \
@@ -30,38 +31,39 @@ SOURCES +=  src/app/spgate_main.cpp \
             externals/rl/rlthread.cpp \
             externals/rl/rlwthread.cpp \
             externals/rl/shm.cpp \
-            src/app/common/bus/modbus/ModbusServer.cpp \
-            src/app/common/bus/modbus/ModbusClient.cpp \
-            src/app/common/bus/spbus/SpBusClient.cpp \
-            src/app/common/bus/spbus/SpBusCodec.cpp \
-            src/app/common/bus/spbus/SpBusRx.cpp \
-            src/app/common/bus/spbus/SpBusServer.cpp \
-            src/app/common/bus/rsbus/RsBusServer.cpp \
-            src/app/common/bus/rsbus/RsBusClient.cpp \
-            src/app/common/bus/rsbus/RsBusFsm.cpp \
-            src/app/common/bus/rsbus/RsBusCodec.cpp \
-            src/app/common/bus/rsbus/RsBusRx.cpp \
-            src/app/common/bus/GateStorage.cpp \
-            src/app/common/bus/RegAccessor.cpp \
-            src/app/common/cli/Cli.cpp \
-            src/app/common/cli/TelnetServer.cpp \
-            src/app/common/cli/TelnetPrinter.cpp \
-            src/app/common/cli/CmdProcessor.cpp \
-            src/app/common/cli/cmds/CmdParamParser.cpp \
-            src/app/common/cli/cmds/CmdParamFormater.cpp \
-            src/app/common/cli/cmds/CmdExit.cpp \
-            src/app/common/cli/cmds/CmdShutdown.cpp \
-            src/app/common/cli/cmds/CmdInfo.cpp \
-            src/app/common/cli/cmds/CmdLog.cpp \
-            src/app/common/cli/cmds/CmdArgLogLevel.cpp \
-            src/app/common/cli/cmds/CmdStats.cpp \
-            src/app/common/cli/cmds/CmdArgStatsType.cpp \
-            src/app/common/cli/cmds/CmdStatsFormater.cpp \
+            src/app/bg/bus/modbus/ModbusServer.cpp \
+            src/app/bg/bus/modbus/ModbusClient.cpp \
+            src/app/bg/bus/spbus/SpBusClient.cpp \
+            src/app/bg/bus/spbus/SpBusCodec.cpp \
+            src/app/bg/bus/spbus/SpBusRx.cpp \
+            src/app/bg/bus/spbus/SpBusServer.cpp \
+            src/app/bg/bus/rsbus/RsBusServer.cpp \
+            src/app/bg/bus/rsbus/RsBusClient.cpp \
+            src/app/bg/bus/rsbus/RsBusFsm.cpp \
+            src/app/bg/bus/rsbus/RsBusCodec.cpp \
+            src/app/bg/bus/rsbus/RsBusRx.cpp \
+            src/app/bg/bus/GateStorage.cpp \
+            src/app/bg/bus/RegAccessor.cpp \
+            src/app/bg/cli/Cli.cpp \
+            src/app/bg/cli/TelnetServer.cpp \
+            src/app/bg/cli/TelnetPrinter.cpp \
+            src/app/bg/cli/CmdProcessor.cpp \
+            src/app/bg/cli/cmds/CmdParamParser.cpp \
+            src/app/bg/cli/cmds/CmdParamFormater.cpp \
+            src/app/bg/cli/cmds/CmdExit.cpp \
+            src/app/bg/cli/cmds/CmdShutdown.cpp \
+            src/app/bg/cli/cmds/CmdInfo.cpp \
+            src/app/bg/cli/cmds/CmdLog.cpp \
+            src/app/bg/cli/cmds/CmdArgLogLevel.cpp \
+            src/app/bg/cli/cmds/CmdStats.cpp \
+            src/app/bg/cli/cmds/CmdArgStatsType.cpp \
+            src/app/bg/cli/cmds/CmdStatsFormater.cpp \
+            src/app/bg/BusGate.cpp \
             src/app/common/sm/ClientFsm.cpp \
             src/app/common/sm/ServerFsm.cpp \
             src/app/common/sockets/LinkAcceptorRl.cpp \
+            src/app/common/sockets/LinkPool.cpp \
             src/app/common/utils/Logger.cpp \
             src/app/common/utils/Utils.cpp \
             src/app/common/utils/ParamParser.cpp \
-            src/app/common/utils/Timer.cpp \
-            src/app/common/BusGate.cpp
+            src/app/common/utils/Timer.cpp
