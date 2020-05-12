@@ -53,7 +53,7 @@ int main(int argc, char** argv)
     };
 
     int c;
-    while ((c = ::getopt_long(argc, argv, "hs:", long_options, &option_index)) != -1)
+    while ((c = ::getopt_long(argc, argv, "hs:b:e:p:m:", long_options, &option_index)) != -1)
     {
         switch (c)
         {
@@ -127,7 +127,9 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    std::cout << "tty: " <<  ttyArg << "\n"
+    std::cout << PROJECT_NAME << " " << PROJECT_VER << "\n"
+              << "Build: " << GIT_BUILD_INFO << "\n"
+              << "tty: " <<  ttyArg << "\n"
               << "start_timeout: " << startTimeout << "\n"
               << "end_timeout: " << endTimeout << "\n"
               << "port: " << portInt << "\n"

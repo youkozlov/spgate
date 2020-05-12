@@ -17,6 +17,7 @@ BusGate::BusGate(Init const& init)
     : iniFileName(init.iniFileName)
     , state(BusGateState::init)
     , regAccessor(modbusRegs)
+    , cliPort(init.cliPort)
 {
     static_assert(sizeof(int) == 4, "");
     static_assert(sizeof(float) == 4, "");
@@ -87,8 +88,13 @@ void BusGate::processRun()
         if (!gate) break;
         gate->tickInd();
     }
+
     modbus->tickInd();
-    cli->tickInd();
+
+    if (cli)
+    {
+        cli->tickInd();
+    }
 }
 
 void BusGate::processError()
@@ -97,7 +103,12 @@ void BusGate::processError()
 
 bool BusGate::createCli()
 {
-    IpAddr ipAddr{"127.0.0.1", 10000};
+    if (!cliPort)
+    {
+        return true;
+    }
+
+    IpAddr ipAddr{"127.0.0.1", cliPort};
     cli::Cli::Init init{ipAddr, *this};
     cli = std::unique_ptr<cli::Cli>(new cli::Cli(init));
 

@@ -36,6 +36,7 @@ public:
     struct Init
     {
         char const* iniFileName;
+        unsigned cliPort;
     };
     
     explicit BusGate(Init const&);
@@ -80,7 +81,7 @@ private:
     BusStats                                      spbusStats;
     BusStats                                      rsbusStats;
     std::array<std::unique_ptr<Bus>, maxNumGates> gates;
-
+    unsigned const                                cliPort;
 };
 
 }

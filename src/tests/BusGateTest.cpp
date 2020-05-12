@@ -96,7 +96,7 @@ TEST(BusGateTest, SpBus)
     std::thread thr1(SpBusServerTest);
     std::thread thr2(BusGateSendModbusAdu);
 
-    BusGate::Init spgInit{testedConfig};
+    BusGate::Init spgInit{testedConfig, 0};
     BusGate spgate(spgInit);
     int cnt = 2047;
     while (cnt--)
@@ -155,7 +155,7 @@ TEST(BusGateTest, RsBus)
     std::thread thr1(RsBusServerTest);
     std::thread thr2(BusGateSendModbusAdu);
 
-    BusGate::Init spgInit{testedConfig};
+    BusGate::Init spgInit{testedConfig, 0};
     BusGate spgate(spgInit);
     int cnt = 2047;
     while (cnt--)

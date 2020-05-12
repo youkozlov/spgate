@@ -4,6 +4,7 @@
 #include "BusGate.hpp"
 #include "utils/TickUtils.hpp"
 #include "utils/Utils.hpp"
+#include "utils/Logger.hpp"
 
 #ifndef QMAKE_VARIANT
 #include "SpGateConfig.hpp"
@@ -17,9 +18,8 @@ void showUsage(int, char** argv)
               << "Options:\n"
               << "\t-h,--help\t\tShow this help message\n"
               << "\t-c,--config FILENAME\tDefine the configuration file\n"
-              << "\t-l,--loglevel NUMBER\tDefine logging level: 0 - DEBUG, 1 - INFO, 2 - WARN, 3 - ERR\n"
-              << "\t-o,--logout NUMBER\tDefine logging output: 0 - CON, 1 - FILE, 2 - DISABLED\n"
-              << "\t-f,--logfile FILENAME\tDefine the logging file"
+              << "\t-l,--loglevel NUMBER\tDefine logging level: 0 - DEBUG, 1 - INFO, 2 - WARN, 3 - ERR, 4 - NA\n"
+              << "\t-i,--cli_port NUMBER\tDefine command line interface port, 0 - disabled\n"
               << std::endl;
 }
 
@@ -33,9 +33,8 @@ int main(int argc, char** argv)
     } items[] = 
     {
         {"../cfg/default.ini", false, ""},
-        {"3", false, ""},
-        {"2", false, ""},
-        {"/tmp/spgate.log", false, ""}
+        {"4", false, ""},
+        {"0", false, ""},
     };
 
     int option_index = 0;
@@ -44,13 +43,12 @@ int main(int argc, char** argv)
         {"help",     no_argument      , 0,  'h'},
         {"config",   required_argument, 0,  'c'},
         {"loglevel", required_argument, 0,  'l'},
-        {"logout",   required_argument, 0,  'o'},
-        {"logfile",  required_argument, 0,  'f'},
+        {"cli_port", required_argument, 0,  'i'},
         {0,        0, 0,  0 }
     };
 
     int c;
-    while ((c = ::getopt_long(argc, argv, "hc:", long_options, &option_index)) != -1)
+    while ((c = ::getopt_long(argc, argv, "hc:l:i:", long_options, &option_index)) != -1)
     {
         switch (c)
         {
@@ -65,13 +63,9 @@ int main(int argc, char** argv)
             items[1].present = true;
             strncpy(items[1].val, ::optarg, sizeof(ConfigItem::val));
         break;
-        case 'o':
+        case 'i':
             items[2].present = true;
             strncpy(items[2].val, ::optarg, sizeof(ConfigItem::val));
-        break;
-        case 'f':
-            items[3].present = true;
-            strncpy(items[3].val, ::optarg, sizeof(ConfigItem::val));
         break;
         default:
             showUsage(argc, argv);
@@ -79,7 +73,39 @@ int main(int argc, char** argv)
         }
     }
 
-    sg::BusGate::Init init{items[0].present ? items[0].val : items[0].defaultVal};
+    //  CONFIGURATION FILE
+    char const* configArg = items[0].present ? items[0].val : items[0].defaultVal;
+
+
+    //  LOGLEVEL
+    char const* loglevelArg = items[1].present ? items[1].val : items[1].defaultVal;
+    unsigned loglevelInt;
+    if (sscanf(loglevelArg, "%u", &loglevelInt) != 1 || loglevelInt > 4)
+    {
+        showUsage(argc, argv);
+        return 1;
+    }
+    sg::Logger::getInst().setLogLevel(static_cast<sg::LogLevel>(loglevelInt));
+
+
+    //  CLI PORT
+    char const* cliportArg = items[2].present ? items[2].val : items[2].defaultVal;
+    unsigned cliportInt;
+    if (sscanf(cliportArg, "%u", &cliportInt) != 1 || cliportInt > 0xffff)
+    {
+        showUsage(argc, argv);
+        return 1;
+    }
+
+
+    std::cout << PROJECT_NAME << " " << PROJECT_VER << "\n"
+              << "Build: " << GIT_BUILD_INFO << "\n"
+              << "config: " <<  configArg << "\n"
+              << "loglevel: " << loglevelInt << "\n"
+              << "cli_port: " << cliportInt << "\n"
+              << std::endl;
+
+    sg::BusGate::Init init{configArg, cliportInt};
     sg::BusGate bg{init};
 
     while (1)
