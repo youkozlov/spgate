@@ -16,6 +16,8 @@ INCLUDEPATH += ../../../externals/rl \
 
 LIBS += -L../../../build/lib -lcommon -lrl
 
+QMAKE_CLEAN += ./Makefile
+
 SOURCES +=  spgate_main.cpp \
             bus/modbus/ModbusServer.cpp \
             bus/modbus/ModbusClient.cpp \

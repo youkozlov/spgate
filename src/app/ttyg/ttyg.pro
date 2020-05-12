@@ -15,5 +15,7 @@ INCLUDEPATH += ../../../externals/rl \
 
 LIBS += -L../../../build/lib -lcommon -lrl
 
+QMAKE_CLEAN += ./Makefile
+
 SOURCES +=  ttyg_main.cpp \
             TtyGate.cpp
