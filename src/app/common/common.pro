@@ -1,7 +1,6 @@
 TEMPLATE = lib
 TARGET = libcommon
 CONFIG += staticlib release c++11 warn_on
-QMAKE_EXTENSION_STATICLIB = a
 
 DEFINES += QMAKE_VARIANT='"\\\"yes\\\""'
 DEFINES += PROJECT_NAME='"\\\"spgate\\\""'
@@ -23,3 +22,6 @@ SOURCES +=  sm/ClientFsm.cpp \
             utils/Utils.cpp \
             utils/ParamParser.cpp \
             utils/Timer.cpp
+
+QMAKE_EXTENSION_STATICLIB = a
+QMAKE_CLEAN += ./Makefile

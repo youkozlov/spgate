@@ -2,21 +2,14 @@ TEMPLATE = app
 TARGET = spgate
 CONFIG += release c++11 warn_on
 
-DEFINES += QMAKE_VARIANT='"\\\"yes\\\""'
-DEFINES += PROJECT_NAME='"\\\"spgate\\\""'
-DEFINES += PROJECT_VER='"\\\"1.0.0\\\""'
-DEFINES += GIT_BUILD_INFO='"\\\"$$system(git diff --quiet || echo dirty-)$$system(git rev-parse --abbrev-ref HEAD)-$$system(git rev-parse --short HEAD)\\\""'
-
 DESTDIR = ../../../build/bin
 OBJECTS_DIR = ../../../build
+
+include(../app.pri)
 
 INCLUDEPATH += ../../../externals/rl \
                ../common \
                bus
-
-LIBS += -L../../../build/lib -lcommon -lrl
-
-QMAKE_CLEAN += ./Makefile
 
 SOURCES +=  spgate_main.cpp \
             bus/modbus/ModbusServer.cpp \
@@ -47,3 +40,7 @@ SOURCES +=  spgate_main.cpp \
             cli/cmds/CmdArgStatsType.cpp \
             cli/cmds/CmdStatsFormater.cpp \
             BusGate.cpp
+
+LIBS += -L../../../build/lib -lcommon -lrl
+
+QMAKE_CLEAN += ./Makefile
