@@ -85,7 +85,7 @@ int TtyGate::readFromLink(sg::Link& link)
 {
     constexpr int timeout = 50;
 
-    int rxLen = 0;
+    unsigned rxLen = 0;
 
     while (1)
     {
@@ -98,7 +98,7 @@ int TtyGate::readFromLink(sg::Link& link)
         {
             return len;
         }
-        if (rxLen + len >= rxBuf.size())
+        if (rxLen + 1 >= rxBuf.size())
         {
             return 0;
         }
