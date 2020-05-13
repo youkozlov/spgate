@@ -11,6 +11,7 @@ namespace ttyg
 TtyGate::TtyGate(Init const& init_)
     : init(init_)
 {
+    parseConfig();
     createAcceptor();
     createSerial();
 }
@@ -19,40 +20,41 @@ TtyGate::~TtyGate()
 {
 }
 
+void TtyGate::parseConfig()
+{
+    if (!parser.parseFile(init.iniFileName))
+    {
+        throw std::runtime_error("Can't parse configuration");
+    }
+    if (!parser.isTtygParsed())
+    {
+        throw std::runtime_error("Can't find ttyg section");
+    }
+}
+
 void TtyGate::createAcceptor()
 {
-    sg::IpAddr addr{"", init.port};
-    sg::LinkAcceptorRl::Init acceptInit = {addr};
+    auto& ttyg = parser.getTtyg();
+
+    sg::LinkAcceptorRl::Init acceptInit = {ttyg.ipAddr};
     acceptor = std::unique_ptr<sg::LinkAcceptorRl>(new sg::LinkAcceptorRl(acceptInit));
 }
 
 void TtyGate::createSerial()
 {
-    switch (init.mode)
-    {
-    case Mode::real:
-        createRealSerial();
-        break;
-    case Mode::stub:
-        createStubSerial();
-        break;
-    }
-}
+    auto& ttyg = parser.getTtyg();
 
-void TtyGate::createRealSerial()
-{
     sg::SerialPortRl::Init serialInit;
-    serialInit.startTimeout = init.startTimeout;
-    serialInit.endTimeout = init.endTimeout;
-    serialInit.port = init.devName;
+    serialInit.port = ttyg.serial.serialName;
+    serialInit.speed = static_cast<int>(ttyg.serial.speed);
+    serialInit.block = static_cast<int>(ttyg.serial.block);
+    serialInit.rtscts = static_cast<int>(ttyg.serial.rtscts);
+    serialInit.bits = static_cast<int>(ttyg.serial.bits);
+    serialInit.stopbits = static_cast<int>(ttyg.serial.stopbits);
+    serialInit.parity = static_cast<int>(ttyg.serial.parity);
+    serialInit.startTimeout = ttyg.startRxTimeout;
+    serialInit.endTimeout = ttyg.endRxTimeout;
     serial = std::unique_ptr<sg::SerialPort>(new sg::SerialPortRl(serialInit));
-}
-
-void TtyGate::createStubSerial()
-{
-    sg::SerialPortFile::Init serialInit;
-    serialInit.file = init.devName;
-    serial = std::unique_ptr<sg::SerialPort>(new sg::SerialPortFile(serialInit));
 }
 
 void TtyGate::tickInd()

@@ -4,6 +4,7 @@
 #include <array>
 #include <list>
 
+#include "utils/ParamParser.hpp"
 #include "sockets/LinkPool.hpp"
 
 namespace sg
@@ -27,11 +28,7 @@ class TtyGate
 public:
     struct Init
     {
-        Mode        mode;
-        char const* devName;
-        unsigned    startTimeout;
-        unsigned    endTimeout;
-        unsigned    port;
+        char const* iniFileName;
     };
     explicit TtyGate(Init const&);
 
@@ -40,16 +37,17 @@ public:
     void tickInd();
 
 private:
+
+    void parseConfig();
     void createAcceptor();
     void createSerial();
-    void createRealSerial();
-    void createStubSerial();
 
     int readFromLink(sg::Link&);
     void accept();
     void process();
 
     Init const                          init;
+    sg::ParamParser                     parser;
     std::unique_ptr<sg::SerialPort>     serial;
     std::unique_ptr<sg::LinkAcceptor>   acceptor;
     sg::LinkPool                        linkPool;

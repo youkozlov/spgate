@@ -15,10 +15,16 @@ class ParamParser
 {
 public:
 
+    ParamParser();
+
     bool parseFile(char const*);
     
     bool parseString(std::string const&);
 
+    bool isTtygParsed() const;
+    TtyGateParams const& getTtyg() const;
+
+    bool isCommonParsed() const;
     CommonParams const& getCommon() const;
 
     GateParams const& getGate(unsigned int i) const;
@@ -39,7 +45,8 @@ private:
     };
 
     void parseConfig(rlIniFile&);
-    void parseCommon(rlIniFile&);
+    bool parseTtyg(rlIniFile&);
+    bool parseCommon(rlIniFile&);
     bool parseGates(rlIniFile&, char const*);
 
     bool parseDevices(rlIniFile&, char const*);
@@ -47,7 +54,12 @@ private:
     bool findSection(rlIniFile&, char const*, NameType);
     bool parseName(rlIniFile&, char const*, char const*, NameType, std::function<bool(char const*)>);
 
+    TtyGateParams             ttyg;
+    bool                      ttygParsed;
+
     CommonParams              common;
+    bool                      commonParsed;
+
     std::vector<GateParams>   gates;
     std::vector<DeviceParams> devices;
     std::vector<ParamParams>  params;

@@ -6,10 +6,24 @@ using namespace sg;
 
 void validate(ParamParser const& parser)
 {
-    EXPECT_EQ(parser.getNumGates(), 2);
-    EXPECT_EQ(parser.getNumDevices(), 2);
-    EXPECT_EQ(parser.getNumParams(), 2);
-    
+    ASSERT_EQ(parser.isTtygParsed(), true);
+    ASSERT_EQ(parser.isCommonParsed(), true);
+    ASSERT_EQ(parser.getNumGates(), 2);
+    ASSERT_EQ(parser.getNumDevices(), 2);
+    ASSERT_EQ(parser.getNumParams(), 2);
+
+    auto& ttyg = parser.getTtyg();
+    EXPECT_EQ(strcmp(ttyg.ipAddr.addr, "0.0.0.0"), 0);
+    EXPECT_EQ(ttyg.ipAddr.port, 9999);
+    EXPECT_EQ(strcmp(ttyg.serial.serialName, "/dev/ttyS0"), 0);
+    EXPECT_EQ(ttyg.serial.block, SerialBlock::off);
+    EXPECT_EQ(ttyg.serial.rtscts, SerialRtsCts::off);
+    EXPECT_EQ(ttyg.serial.bits, SerialBits::b8);
+    EXPECT_EQ(ttyg.serial.stopbits, SerialStopBits::b2);
+    EXPECT_EQ(ttyg.serial.parity, SerialParity::none);
+    EXPECT_EQ(ttyg.startRxTimeout, 100);
+    EXPECT_EQ(ttyg.endRxTimeout, 300);
+
     auto& common = parser.getCommon();
     EXPECT_EQ(strcmp(common.modbusAddr.addr, "127.0.0.1"), 0);
     EXPECT_EQ(strlen(common.modbusAddr.addr), strlen("127.0.0.1")); 
@@ -48,6 +62,18 @@ TEST(ParamParserTest, ParseString)
 {
     std::string data = 
 R"foo(
+[ttyg]
+ip_addr=0.0.0.0:9999
+port=/dev/ttyS0
+speed=9600
+block=off
+rts_cts=off
+bits=8
+stop_bits=2
+parity=none
+start_rx_timeout=100
+end_rx_timeout=300
+
 [common]
 modbus_addr=127.0.0.1:12345
 

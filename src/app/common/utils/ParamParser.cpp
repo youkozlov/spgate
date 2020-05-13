@@ -95,6 +95,144 @@ bool parseValue(ParamType& prm, const char* str)
     return true;
 }
 
+bool parseValue(SerialName& prm, const char* str)
+{
+    std::strncpy(prm, str, maxLenName);
+    return true;
+}
+
+bool parseValue(SerialSpeed& prm, const char* str)
+{
+    if (!strcmp(str, "2400"))
+    {
+        prm = SerialSpeed::b2400;
+    }
+    else if (!strcmp(str, "4800"))
+    {
+        prm = SerialSpeed::b4800;
+    }
+    else if (!strcmp(str, "9600"))
+    {
+        prm = SerialSpeed::b9600;
+    }
+    else if (!strcmp(str, "19200"))
+    {
+        prm = SerialSpeed::b19200;
+    }
+    else if (!strcmp(str, "38400"))
+    {
+        prm = SerialSpeed::b38400;
+    }
+    else if (!strcmp(str, "57600"))
+    {
+        prm = SerialSpeed::b57600;
+    }
+    else if (!strcmp(str, "115200"))
+    {
+        prm = SerialSpeed::b115200;
+    }
+    else
+    {
+        LM(LE, "Unexpected value: %s, len: %zu", str, strlen(str));
+        return false;
+    }
+    return true;
+}
+
+bool parseValue(SerialBlock& prm, const char* str)
+{
+    if (!strcmp(str, "on"))
+    {
+        prm = SerialBlock::on;
+    }
+    else if (!strcmp(str, "off"))
+    {
+        prm = SerialBlock::off;
+    }
+    else
+    {
+        LM(LE, "Unexpected value: %s, len: %zu", str, strlen(str));
+        return false;
+    }
+    return true;
+}
+
+bool parseValue(SerialRtsCts& prm, const char* str)
+{
+    if (!strcmp(str, "on"))
+    {
+        prm = SerialRtsCts::on;
+    }
+    else if (!strcmp(str, "off"))
+    {
+        prm = SerialRtsCts::off;
+    }
+    else
+    {
+        LM(LE, "Unexpected value: %s, len: %zu", str, strlen(str));
+        return false;
+    }
+    return true;
+}
+
+bool parseValue(SerialStopBits& prm, const char* str)
+{
+    if (!strcmp(str, "1"))
+    {
+        prm = SerialStopBits::b1;
+    }
+    else if (!strcmp(str, "2"))
+    {
+        prm = SerialStopBits::b2;
+    }
+    else
+    {
+        LM(LE, "Unexpected value: %s, len: %zu", str, strlen(str));
+        return false;
+    }
+    return true;
+}
+
+bool parseValue(SerialBits& prm, const char* str)
+{
+    if (!strcmp(str, "7"))
+    {
+        prm = SerialBits::b7;
+    }
+    else if (!strcmp(str, "8"))
+    {
+        prm = SerialBits::b8;
+    }
+    else
+    {
+        LM(LE, "Unexpected value: %s, len: %zu", str, strlen(str));
+        return false;
+    }
+    return true;
+}
+
+bool parseValue(SerialParity& prm, const char* str)
+{
+    if (!strcmp(str, "none"))
+    {
+        prm = SerialParity::none;
+    }
+    else if (!strcmp(str, "odd"))
+    {
+        prm = SerialParity::odd;
+    }
+    else if (!strcmp(str, "even"))
+    {
+        prm = SerialParity::even;
+    }
+    else
+    {
+        LM(LE, "Unexpected value: %s, len: %zu", str, strlen(str));
+        return false;
+    }
+    return true;
+}
+
 class rlStringSocket : public rlSocketInterface
 {
 public:
@@ -135,6 +273,12 @@ bool ParamParser::parseFile(char const* fileName)
     return true;
 }
 
+ParamParser::ParamParser()
+    : ttygParsed(false)
+    , commonParsed(false)
+{
+}
+
 bool ParamParser::parseString(std::string const& data)
 {
     rlStringSocket dataBuf(data);
@@ -154,6 +298,21 @@ bool ParamParser::parseString(std::string const& data)
         return false;
     }
     return true;
+}
+
+bool ParamParser::isTtygParsed() const
+{
+    return ttygParsed;
+}
+
+TtyGateParams const& ParamParser::getTtyg() const
+{
+    return ttyg;
+}
+
+bool ParamParser::isCommonParsed() const
+{
+    return commonParsed;
 }
 
 CommonParams const& ParamParser::getCommon() const
@@ -194,7 +353,9 @@ unsigned int ParamParser::getNumParams() const
 
 void ParamParser::parseConfig(rlIniFile& parser)
 {
-    parseCommon(parser);
+    ttygParsed = parseTtyg(parser);
+
+    commonParsed = parseCommon(parser);
 
     char sectionName[16] = {};
     unsigned int i = 0;
@@ -224,14 +385,80 @@ void ParamParser::parseConfig(rlIniFile& parser)
         , getNumParams());
 }
 
-void ParamParser::parseCommon(rlIniFile& parser)
+bool ParamParser::parseTtyg(rlIniFile& parser)
 {
-    findSection(parser, "common", mandatory);
-    
+    constexpr char ttygName[] = "ttyg";
+
+    if (!findSection(parser, ttygName, optional))
+    {
+        return false;
+    }
+
+    parseName(parser, ttygName, "ip_addr", mandatory, [this](const char* str)
+    {
+        return parseValue(ttyg.ipAddr, str);
+    });
+
+    parseName(parser, ttygName, "port", mandatory, [this](const char* str)
+    {
+        return parseValue(ttyg.serial.serialName, str);
+    });
+
+    parseName(parser, ttygName, "speed", mandatory, [this](const char* str)
+    {
+        return parseValue(ttyg.serial.speed, str);
+    });
+
+    parseName(parser, ttygName, "block", mandatory, [this](const char* str)
+    {
+        return parseValue(ttyg.serial.block, str);
+    });
+
+    parseName(parser, ttygName, "rts_cts", mandatory, [this](const char* str)
+    {
+        return parseValue(ttyg.serial.rtscts, str);
+    });
+
+    parseName(parser, ttygName, "bits", mandatory, [this](const char* str)
+    {
+        return parseValue(ttyg.serial.bits, str);
+    });
+
+    parseName(parser, ttygName, "stop_bits", mandatory, [this](const char* str)
+    {
+        return parseValue(ttyg.serial.stopbits, str);
+    });
+
+    parseName(parser, ttygName, "parity", mandatory, [this](const char* str)
+    {
+        return parseValue(ttyg.serial.parity, str);
+    });
+
+    parseName(parser, ttygName, "start_rx_timeout", mandatory, [this](const char* str)
+    {
+        return parseValue(ttyg.startRxTimeout, str);
+    });
+
+    parseName(parser, ttygName, "end_rx_timeout", mandatory, [this](const char* str)
+    {
+        return parseValue(ttyg.endRxTimeout, str);
+    });
+
+    return true;
+}
+
+bool ParamParser::parseCommon(rlIniFile& parser)
+{
+    if (!findSection(parser, "common", optional))
+    {
+        return false;
+    }
+
     parseName(parser, "common", "modbus_addr", mandatory, [this](const char* str)
     {
         return parseValue(common.modbusAddr, str);
     });
+    return true;
 }
 
 bool ParamParser::parseGates(rlIniFile& parser, char const* gateName)

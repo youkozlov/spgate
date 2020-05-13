@@ -2,6 +2,7 @@
 #include <getopt.h>
 #include <cstring>
 #include "TtyGate.hpp"
+#include "utils/Logger.hpp"
 #include "utils/Utils.hpp"
 #include "utils/TickUtils.hpp"
 
@@ -16,11 +17,8 @@ void showUsage(int, char** argv)
               << "Usage: " << argv[0] << "\n"
               << "Options:\n"
               << "\t-h,--help\t\tShow this help message\n"
-              << "\t-s,--tty SERIALPORT\tDefine the serial port device, default /dev/tty0\n"
-              << "\t-b,--start_timeout TIMEOUT\tDefine start serial port timeout, default 100ms\n"
-              << "\t-e,--end_timeout TIMEOUT\tDefine end serial port timeout, default 300ms\n"
-              << "\t-p,--port NUMBER\tDefine the tcp/ip port for incoming connections, default 9999\n"
-              << "\t-m,--mode MODENAME\tDefine execution mode, default real\n"
+              << "\t-c,--config FILENAME\tDefine the configuration file\n"
+              << "\t-l,--loglevel NUMBER\tDefine logging level: 0 - DEBUG, 1 - INFO, 2 - WARN, 3 - ERR, 4 - NA\n"
               << std::endl;
 }
 
@@ -33,112 +31,65 @@ int main(int argc, char** argv)
         char val[128];
     } items[] = 
     {
-        {"/dev/tty0", false, ""},
-        {"100", false, ""},
-        {"300", false, ""},
-        {"9999", false, ""},
-        {"real", false, ""},
+        {"../cfg/default.ini", false, ""},
+        {"4", false, ""},
     };
 
     int option_index = 0;
     ::option long_options[] = 
     {
-        {"help",          no_argument      , 0,  'h'},
-        {"tty",           required_argument, 0,  's'},
-        {"start_timeout", required_argument, 0,  'b'},
-        {"end_timeout",   required_argument, 0,  'e'},
-        {"port",          required_argument, 0,  'p'},
-        {"mode",          required_argument, 0,  'm'},
+        {"help",     no_argument      , 0,  'h'},
+        {"config",   required_argument, 0,  'c'},
+        {"loglevel", required_argument, 0,  'l'},
         {0,        0, 0,  0 }
     };
 
     int c;
-    while ((c = ::getopt_long(argc, argv, "hs:b:e:p:m:", long_options, &option_index)) != -1)
+    while ((c = ::getopt_long(argc, argv, "hc:l:", long_options, &option_index)) != -1)
     {
         switch (c)
         {
         case 'h':
             showUsage(argc, argv);
             return 1;
-        case 's':
+        case 'c':
             items[0].present = true;
-            std::strncpy(items[0].val, ::optarg, sizeof(ConfigItem::val));
+            strncpy(items[0].val, ::optarg, sizeof(ConfigItem::val));
         break;
-        case 'b':
+        case 'l':
             items[1].present = true;
-            std::strncpy(items[1].val, ::optarg, sizeof(ConfigItem::val));
-        break;
-        case 'e':
-            items[2].present = true;
-            std::strncpy(items[2].val, ::optarg, sizeof(ConfigItem::val));
-        break;
-        case 'p':
-            items[3].present = true;
-            std::strncpy(items[3].val, ::optarg, sizeof(ConfigItem::val));
-        break;
-        case 'm':
-            items[4].present = true;
-            std::strncpy(items[4].val, ::optarg, sizeof(ConfigItem::val));
+            strncpy(items[1].val, ::optarg, sizeof(ConfigItem::val));
         break;
         default:
             showUsage(argc, argv);
             return 1;
         }
     }
-    char const* ttyArg = items[0].present ? items[0].val : items[0].defaultVal;
 
-    char const* startTimeoutArg = items[1].present ? items[1].val : items[1].defaultVal;
-    unsigned startTimeout;
-    if (sscanf(startTimeoutArg, "%u", &startTimeout) != 1 || startTimeout > 0xffff)
-    {
-        showUsage(argc, argv);
-        return 1;
-    }
+    //  CONFIGURATION FILE
+    char const* configArg = items[0].present ? items[0].val : items[0].defaultVal;
 
-    char const* endTimeoutttyArg = items[2].present ? items[2].val : items[2].defaultVal;
-    unsigned endTimeout;
-    if (sscanf(endTimeoutttyArg, "%u", &endTimeout) != 1 || endTimeout > 0xffff)
-    {
-        showUsage(argc, argv);
-        return 1;
-    }
 
-    char const* portArg = items[3].present ? items[3].val : items[3].defaultVal;
-    unsigned portInt;
-    if (sscanf(portArg, "%u", &portInt) != 1 || portInt > 0xffff)
+    //  LOGLEVEL
+    char const* loglevelArg = items[1].present ? items[1].val : items[1].defaultVal;
+    unsigned loglevelInt;
+    if (sscanf(loglevelArg, "%u", &loglevelInt) != 1 || loglevelInt > 4)
     {
         showUsage(argc, argv);
         return 1;
     }
-    
-    char const* modeArg = items[4].present ? items[4].val : items[4].defaultVal;
-    ttyg::Mode mode;
-    if (0 == strcmp(modeArg, "real"))
-    {
-        mode = ttyg::Mode::real;
-    }
-    else if (0 == strcmp(modeArg, "stub"))
-    {
-        mode = ttyg::Mode::stub;
-    }
-    else
-    {
-        showUsage(argc, argv);
-        return 1;
-    }
+    sg::Logger::getInst().setLogLevel(static_cast<sg::LogLevel>(loglevelInt));
+
 
     std::cout << PROJECT_NAME << " " << PROJECT_VER << "\n"
               << "Build: " << GIT_BUILD_INFO << "\n"
-              << "tty: " <<  ttyArg << "\n"
-              << "start_timeout: " << startTimeout << "\n"
-              << "end_timeout: " << endTimeout << "\n"
-              << "port: " << portInt << "\n"
-              << "mode: " << modeArg << "\n"
+              << "config: " <<  configArg << "\n"
+              << "loglevel: " << loglevelInt << "\n"
               << std::endl;
 
     try
     {
-        ttyg::TtyGate::Init init{mode, ttyArg, startTimeout, endTimeout, portInt};
+        ttyg::TtyGate::Init init{configArg};
         ttyg::TtyGate tg(init);
         while (1)
         {
