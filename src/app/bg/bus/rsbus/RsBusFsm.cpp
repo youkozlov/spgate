@@ -22,7 +22,7 @@ RsBusFsm::RsBusFsm(RsBus& b)
     , recvTimer(recvTimeoutMs)
     , idleTimer(bus.period())
     , errorTimer(errorTimeoutMs)
-    , timeoutTimer(errorTimeoutMs * 3)
+    , timeoutTimer(errorTimeoutMs * 2)
 {
 }
 
@@ -91,7 +91,7 @@ void RsBusFsm::connect()
 
 void RsBusFsm::sendStartSequence()
 {
-    if (not sendStartSeqTimer.isExpired())
+    if (not sendStartSeqTimer.expired())
     {
         return;
     }
@@ -137,7 +137,7 @@ void RsBusFsm::recvSessionRsp()
         errorTimer.set();
         changeState(State::error);
     }
-    else if (recvTimer.isExpired())
+    else if (recvTimer.expired())
     {
         bus.timeout();
         timeoutTimer.set();
@@ -151,7 +151,7 @@ void RsBusFsm::recvSessionRsp()
 
 void RsBusFsm::idle()
 {
-    if (idleTimer.isExpired())
+    if (idleTimer.expired())
     {
         changeState(State::sendDataReq);
     }
@@ -181,7 +181,7 @@ void RsBusFsm::recvDataRsp()
         errorTimer.set();
         changeState(State::error);
     }
-    else if (recvTimer.isExpired())
+    else if (recvTimer.expired())
     {
         bus.timeout();
         timeoutTimer.set();
@@ -196,7 +196,7 @@ void RsBusFsm::recvDataRsp()
 
 void RsBusFsm::error()
 {
-    if (errorTimer.isExpired())
+    if (errorTimer.expired())
     {
         changeState(State::init);
     }
@@ -204,7 +204,7 @@ void RsBusFsm::error()
 
 void RsBusFsm::timeout()
 {
-    if (timeoutTimer.isExpired())
+    if (timeoutTimer.expired())
     {
         startSequenceCounter = 0;
         sendStartSeqTimer.set();

@@ -19,7 +19,7 @@ ClientFsm::ClientFsm(Client& g)
     , recvTimer(recvTimeoutMs)
     , idleTimer(client.period())
     , errorTimer(errorTimeoutMs)
-    , timeoutTimer(errorTimeoutMs * 3)
+    , timeoutTimer(errorTimeoutMs * 2)
 {
 }
 
@@ -81,7 +81,7 @@ void ClientFsm::connect()
 
 void ClientFsm::idle()
 {
-    if (idleTimer.isExpired())
+    if (idleTimer.expired())
     {
         changeState(State::send);
     }
@@ -111,7 +111,7 @@ void ClientFsm::receive()
         errorTimer.set();
         changeState(State::error);
     }
-    else if (recvTimer.isExpired())
+    else if (recvTimer.expired())
     {
         client.timeout();
         timeoutTimer.set();
@@ -126,7 +126,7 @@ void ClientFsm::receive()
 
 void ClientFsm::error()
 {
-    if (errorTimer.isExpired())
+    if (errorTimer.expired())
     {
         changeState(State::init);
     }
@@ -134,7 +134,7 @@ void ClientFsm::error()
 
 void ClientFsm::timeout()
 {
-    if (timeoutTimer.isExpired())
+    if (timeoutTimer.expired())
     {
         idleTimer.set();
         changeState(State::idle);

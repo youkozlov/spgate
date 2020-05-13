@@ -60,6 +60,13 @@ void BusGate::processInit()
         return;
     }
 
+    if (!parser.isCommonParsed())
+    {
+        LM(LE, "Can't find common section");
+        chageState(BusGateState::error);
+        return;
+    }
+
     if (!createCli())
     {
         chageState(BusGateState::error);

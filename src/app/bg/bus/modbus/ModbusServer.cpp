@@ -15,7 +15,6 @@ ModbusServer::ModbusServer(Init const& init)
     , regs(init.regs)
     , acceptor(init.acceptor)
     , stats(init.stats)
-    , tick(0)
 {
     link = std::unique_ptr<LinkRl>(new LinkRl(-1));
 }

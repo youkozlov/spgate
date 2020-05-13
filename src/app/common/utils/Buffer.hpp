@@ -9,7 +9,10 @@ template<typename T>
 class Buffer
 {
 public:
-    Buffer() {}
+    Buffer()
+    {
+        reset();
+    }
 
     void reset()
     {

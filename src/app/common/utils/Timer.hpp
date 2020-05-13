@@ -1,5 +1,7 @@
 #pragma once
 
+#include <chrono>
+
 namespace sg
 {
 
@@ -11,13 +13,11 @@ public:
 
     void set();
 
-    void reset();
-
-    bool isExpired();
+    bool expired();
 
 private:
-    unsigned long       counter;
-    unsigned long const period;
+    int const period;
+    std::chrono::steady_clock::time_point storedTime;
 };
 
 }

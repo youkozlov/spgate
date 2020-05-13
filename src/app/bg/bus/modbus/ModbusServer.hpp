@@ -58,7 +58,6 @@ private:
     ModbusStats&          stats;
     
     std::array<unsigned char, rxBufferSize> rawBuffer;
-    uint64_t tick;
 };
 
 }

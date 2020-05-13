@@ -15,9 +15,6 @@ struct RsBusFrame;
 class RsBusCodec
 {
 public:
-    enum class State
-    {
-    };
 
     explicit RsBusCodec(WrapBuffer&, RsBusFrame&);
 

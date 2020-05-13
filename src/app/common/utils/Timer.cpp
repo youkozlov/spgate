@@ -5,24 +5,22 @@ namespace sg
 {
 
 Timer::Timer(unsigned int ms)
-    : counter(0)
-    , period(TickUtils::getTicks(ms))
+    : period(ms)
+    , storedTime(std::chrono::steady_clock::now())
 {
 }
 
 void Timer::set()
 {
-    counter = period;
+    storedTime = std::chrono::steady_clock::now();
 }
 
-void Timer::reset()
+bool Timer::expired()
 {
-    counter = 0;
-}
-
-bool Timer::isExpired()
-{
-    return (!counter) || ((counter--) == 1);
+    using Milliseconds = std::chrono::duration<int, std::milli>;
+    auto currentTime = std::chrono::steady_clock::now();
+    Milliseconds const duration = std::chrono::duration_cast<Milliseconds>(currentTime - storedTime);
+    return (duration.count() > period);
 }
 
 }
