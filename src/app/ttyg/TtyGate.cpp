@@ -1,6 +1,5 @@
 #include "TtyGate.hpp"
 #include "serial/SerialPortRl.hpp"
-#include "serial/SerialPortFile.hpp"
 #include "sockets/LinkAcceptorRl.hpp"
 #include "sockets/LinkRl.hpp"
 #include "utils/Utils.hpp"

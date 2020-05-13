@@ -16,7 +16,6 @@ add_library(common
     sockets/LinkPool.cpp
 
     serial/SerialPortRl.cpp
-    serial/SerialPortFile.cpp
 
     )
 

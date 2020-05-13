@@ -14,7 +14,6 @@ SOURCES +=  sm/ClientFsm.cpp \
             sockets/LinkAcceptorRl.cpp \
             sockets/LinkPool.cpp \
             serial/SerialPortRl.cpp \
-            serial/SerialPortFile.cpp \
             utils/Logger.cpp \
             utils/Utils.cpp \
             utils/ParamParser.cpp \
