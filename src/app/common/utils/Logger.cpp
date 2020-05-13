@@ -4,7 +4,7 @@
 #include <ctime>
 
 #define DEFAULT_LOG_OUTPUT CON
-#define DEFAULT_LOG_LEVEL  LD
+#define DEFAULT_LOG_LEVEL  LN
 #define DEFAULT_LOG_FILE   "/tmp/spgate.log"
 
 namespace sg
