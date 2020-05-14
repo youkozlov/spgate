@@ -5,7 +5,9 @@
 #include "sockets/LinkAcceptorRl.hpp"
 #include "modbus/ModbusServer.hpp"
 
+#include "spbus/SpBusServer.hpp"
 #include "spbus/SpBusClient.hpp"
+#include "rsbus/RsBusServer.hpp"
 #include "rsbus/RsBusClient.hpp"
 
 #include "utils/Logger.hpp"
@@ -18,6 +20,7 @@ BusGate::BusGate(Init const& init)
     , state(BusGateState::init)
     , regAccessor(modbusRegs)
     , cliPort(init.cliPort)
+    , isEmulMode(init.isEmulMode)
 {
     static_assert(sizeof(int) == 4, "");
     static_assert(sizeof(float) == 4, "");
@@ -96,7 +99,10 @@ void BusGate::processRun()
         gate->tickInd();
     }
 
-    modbus->tickInd();
+    if (modbus)
+    {
+        modbus->tickInd();
+    }
 
     if (cli)
     {
@@ -124,6 +130,11 @@ bool BusGate::createCli()
 
 bool BusGate::createModbus()
 {
+    if (isEmulMode)
+    {
+        return true;
+    }
+
     auto& common = parser.getCommon();
     
     LinkAcceptorRl::Init acceptInit = {common.modbusAddr};
@@ -143,32 +154,61 @@ bool BusGate::createGates()
         return false;
     }
 
+    if (isEmulMode)
+    {
+        return createGatesServer();
+    }
+    return createGatesClient();
+}
+
+bool BusGate::createGatesClient()
+{
     for (unsigned int i = 0; i < parser.getNumGates(); ++i)
     {
         sg::GateParams const& gatePrms = parser.getGate(i);
 
-        try
+        switch (gatePrms.gateType)
         {
-            switch (gatePrms.gateType)
-            {
-            case GateType::sps:
-            {
-                SpBusClient::Init init{gatePrms, parser, regAccessor, spbusStats};
-                gates[i] = std::unique_ptr<Bus>(new SpBusClient(init));
-            }
-            break;
-            case GateType::m4:
-            {
-                rsbus::RsBusClient::Init init{gatePrms, parser, regAccessor, rsbusStats};
-                gates[i] = std::unique_ptr<Bus>(new rsbus::RsBusClient(init));
-            }
-            break;
-            }
+        case GateType::sps:
+        {
+            SpBusClient::Init init{gatePrms, parser, regAccessor, spbusStats};
+            gates[i] = std::unique_ptr<Bus>(new SpBusClient(init));
         }
-        catch(char const*)
+        break;
+        case GateType::m4:
         {
-            LM(LE, "Can't configure gate=%u", i);
-            return false;
+            rsbus::RsBusClient::Init init{gatePrms, parser, regAccessor, rsbusStats};
+            gates[i] = std::unique_ptr<Bus>(new rsbus::RsBusClient(init));
+        }
+        break;
+        }
+    }
+
+    return true;
+}
+
+bool BusGate::createGatesServer()
+{
+    serverRegs = std::unique_ptr<Buffer<float>>(new Buffer<float>());
+
+    for (unsigned int i = 0; i < parser.getNumGates(); ++i)
+    {
+        sg::GateParams const& gatePrms = parser.getGate(i);
+
+        switch (gatePrms.gateType)
+        {
+        case GateType::sps:
+        {
+            SpBusServer::Init init{*serverRegs, gatePrms.gateAddr};
+            gates[i] = std::unique_ptr<Bus>(new SpBusServer(init));
+        }
+        break;
+        case GateType::m4:
+        {
+            rsbus::RsBusServer::Init init{*serverRegs, gatePrms.gateAddr};
+            gates[i] = std::unique_ptr<Bus>(new rsbus::RsBusServer(init));
+        }
+        break;
         }
     }
 

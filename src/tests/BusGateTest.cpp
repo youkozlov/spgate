@@ -29,9 +29,7 @@ void SpBusServerTest()
 {
 //    IpAddr const ipAddr = {"192.168.0.193", testPort};
     IpAddr const ipAddr = {"127.0.0.1", testPort};
-    LinkAcceptorRl::Init acceptInit = {ipAddr};
-    LinkAcceptorRl acceptor(acceptInit);
-    SpBusServer::Init spbusInit{busBuffer, acceptor};
+    SpBusServer::Init spbusInit{busBuffer, ipAddr};
     SpBusServer server{spbusInit};
     while (!done)
     {        
@@ -44,9 +42,7 @@ void RsBusServerTest()
 {
 //    IpAddr const ipAddr = {"192.168.0.193", testPort};
     IpAddr const ipAddr = {"127.0.0.1", testPort};
-    LinkAcceptorRl::Init acceptInit = {ipAddr};
-    LinkAcceptorRl acceptor(acceptInit);
-    rsbus::RsBusServer::Init busInit{busBuffer, acceptor};
+    rsbus::RsBusServer::Init busInit{busBuffer, ipAddr};
     rsbus::RsBusServer server{busInit};
     while (!done)
     {        
@@ -96,7 +92,7 @@ TEST(BusGateTest, SpBus)
     std::thread thr1(SpBusServerTest);
     std::thread thr2(BusGateSendModbusAdu);
 
-    BusGate::Init spgInit{testedConfig, 0};
+    BusGate::Init spgInit{testedConfig, 0, false};
     BusGate spgate(spgInit);
     int cnt = 2047;
     while (cnt--)
@@ -155,7 +151,7 @@ TEST(BusGateTest, RsBus)
     std::thread thr1(RsBusServerTest);
     std::thread thr2(BusGateSendModbusAdu);
 
-    BusGate::Init spgInit{testedConfig, 0};
+    BusGate::Init spgInit{testedConfig, 0, false};
     BusGate spgate(spgInit);
     int cnt = 2047;
     while (cnt--)

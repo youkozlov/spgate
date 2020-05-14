@@ -11,6 +11,8 @@
 #include "utils/Utils.hpp"
 #include "utils/Logger.hpp"
 
+#include <stdexcept>
+
 namespace sg
 {
 
@@ -26,7 +28,7 @@ SpBusClient::SpBusClient(Init const& init)
 {
     if (!storage.configure(gateParams))
     {
-        throw("Configuration is invalid");
+        throw std::runtime_error("Configuration is invalid");
     }
 }
 
@@ -70,6 +72,7 @@ int SpBusClient::send()
     }
 
     stats.nRdp += 1;
+    stats.nTx  += 1;
 
     return link->write(txBuf.cbegin(), txBuf.size());
 }
@@ -114,6 +117,8 @@ int SpBusClient::receiveFrame(SpBusFrame& frame)
         LM(LE, "Unexpected function=%02X", frame.hdr.fc);
         return 0;
     }
+
+    stats.nRx  += 1;
 
     return len;
 }

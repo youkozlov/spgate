@@ -4,7 +4,7 @@
 #include "RsBusCodec.hpp"
 
 #include "sockets/LinkRl.hpp"
-#include "sockets/LinkAcceptor.hpp"
+#include "sockets/LinkAcceptorRl.hpp"
 
 #include "utils/WrapBuffer.hpp"
 #include "utils/Utils.hpp"
@@ -125,7 +125,7 @@ char const* RsBusServerFsm::toString(State st) const
 RsBusServer::RsBusServer(Init const& init)
     : fsm(*this)
     , buffer(init.buffer)
-    , acceptor(init.acceptor)
+    , acceptor(std::unique_ptr<LinkAcceptor>(new LinkAcceptorRl({init.ipAddr})))
     , link(std::unique_ptr<LinkRl>(new LinkRl(-1)))
     , rx(*link)
     , busFsm(*this)
@@ -148,7 +148,7 @@ char const* RsBusServer::name()
 
 int RsBusServer::accept()
 {
-    int fd = acceptor.accept();
+    int fd = acceptor->accept();
     if (fd < 0)
     {
         return 0;

@@ -19,6 +19,7 @@ void showUsage(int, char** argv)
               << "\t-h,--help\t\tShow this help message\n"
               << "\t-c,--config FILENAME\tDefine the configuration file\n"
               << "\t-i,--cli_port NUMBER\tDefine command line interface port, 0 - disabled\n"
+              << "\t-e,--emul NUMBER\tDefine emulation mode, 0 - disabled\n"
               << std::endl;
 }
 
@@ -33,6 +34,7 @@ int main(int argc, char** argv)
     {
         {"../cfg/default.ini", false, ""},
         {"0", false, ""},
+        {"0", false, ""},
     };
 
     int option_index = 0;
@@ -41,11 +43,12 @@ int main(int argc, char** argv)
         {"help",     no_argument      , 0,  'h'},
         {"config",   required_argument, 0,  'c'},
         {"cli_port", required_argument, 0,  'i'},
+        {"emul",     required_argument, 0,  'e'},
         {0,        0, 0,  0 }
     };
 
     int c;
-    while ((c = ::getopt_long(argc, argv, "hc:i:", long_options, &option_index)) != -1)
+    while ((c = ::getopt_long(argc, argv, "hc:i:e:", long_options, &option_index)) != -1)
     {
         switch (c)
         {
@@ -59,6 +62,10 @@ int main(int argc, char** argv)
         case 'i':
             items[1].present = true;
             strncpy(items[1].val, ::optarg, sizeof(ConfigItem::val));
+        break;
+        case 'e':
+            items[2].present = true;
+            strncpy(items[2].val, ::optarg, sizeof(ConfigItem::val));
         break;
         default:
             showUsage(argc, argv);
@@ -79,27 +86,45 @@ int main(int argc, char** argv)
         return 1;
     }
 
+
+    // EMUL
+    char const* emulArg = items[2].present ? items[2].val : items[2].defaultVal;
+    unsigned emulInt;
+    if (sscanf(emulArg, "%u", &emulInt) != 1)
+    {
+        showUsage(argc, argv);
+        return 1;
+    }
+
     auto& logger = sg::Logger::getInst();
 
     std::cout << PROJECT_NAME << " " << PROJECT_VER << "\n"
               << "Build: " << GIT_BUILD_INFO << "\n"
               << "config: " <<  configArg << "\n"
               << "cli_port: " << cliportInt << "\n"
+              << "emul: " << emulInt << "\n"
               << "loglevel: " << logger.getLogLevelStr() << std::endl
               << "logoutput: " << logger.getLogOutputStr() << std::endl
               << "logfile: " << logger.getLogFile() << std::endl
               << std::endl;
 
-    sg::BusGate::Init init{configArg, cliportInt};
+    sg::BusGate::Init init{configArg, cliportInt, (emulInt != 0)};
     sg::BusGate bg{init};
 
-    while (1)
+    try
     {
-        if (bg.tickInd())
+        while (1)
         {
-            break;
+            if (bg.tickInd())
+            {
+                break;
+            }
+            sg::Utils::nsleep(sg::TickUtils::getTickPeriod());
         }
-        sg::Utils::nsleep(sg::TickUtils::getTickPeriod());
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << "App catched exeption: " << e.what() << std::endl;
     }
 
     return 0;

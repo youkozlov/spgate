@@ -3,6 +3,8 @@
 #include <memory>
 #include <array>
 
+#include "Bus.hpp"
+#include "types/IpAddr.hpp"
 #include "sm/Server.hpp"
 #include "sm/ServerFsm.hpp"
 #include "RsBusRx.hpp"
@@ -52,20 +54,20 @@ private:
 
 
 
-class RsBusServer : public Server
+class RsBusServer : public Bus, public Server
 {
 public:
     struct Init
     {
         Buffer<float>& buffer;
-        LinkAcceptor&  acceptor;
+        IpAddr const&  ipAddr;
     };
 
     explicit RsBusServer(Init const&);
 
     ~RsBusServer();
 
-    void tickInd();
+    void tickInd() final;
 
     char const* name() final;
 
@@ -85,7 +87,7 @@ private:
 
     ServerFsm                       fsm;
     Buffer<float>&                  buffer;
-    LinkAcceptor&                   acceptor;
+    std::unique_ptr<LinkAcceptor>   acceptor;
     std::unique_ptr<Link>           link;
     RsBusRx                         rx;
     RsBusServerFsm                  busFsm;

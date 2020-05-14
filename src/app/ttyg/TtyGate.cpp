@@ -84,7 +84,7 @@ void TtyGate::accept()
 
 int TtyGate::readFromLink(sg::Link& link)
 {
-    constexpr int timeout = 50;
+    constexpr int timeout = 5;
 
     unsigned rxLen = 0;
 
@@ -134,7 +134,7 @@ void TtyGate::process()
             continue;
         }
 
-        sg::Utils::nsleep(1000 * 1000 * 300);
+        sg::Utils::nsleep(1000 * 1000 * 100);
 
         rxLen = serial->read(&rxBuf[0], rxBuf.size());
 

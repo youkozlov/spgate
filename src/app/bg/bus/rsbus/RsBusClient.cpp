@@ -12,6 +12,8 @@
 
 #include "sockets/LinkRl.hpp"
 
+#include <stdexcept>
+
 namespace sg
 {
 
@@ -30,7 +32,7 @@ RsBusClient::RsBusClient(Init const& init)
 {
     if (!storage.configure(gateParams))
     {
-        throw("Configuration is invalid");
+        throw std::runtime_error("Configuration is invalid");
     }
 }
 

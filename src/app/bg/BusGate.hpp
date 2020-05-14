@@ -37,6 +37,7 @@ public:
     {
         char const* iniFileName;
         unsigned cliPort;
+        bool isEmulMode;
     };
     
     explicit BusGate(Init const&);
@@ -66,6 +67,8 @@ private:
     bool createCli();
     bool createModbus();
     bool createGates();
+    bool createGatesClient();
+    bool createGatesServer();
 
     char const*                     iniFileName;
     BusGateState                    state;
@@ -82,6 +85,8 @@ private:
     BusStats                                      rsbusStats;
     std::array<std::unique_ptr<Bus>, maxNumGates> gates;
     unsigned const                                cliPort;
+    bool const                                    isEmulMode;
+    std::unique_ptr<Buffer<float>>                serverRegs;
 };
 
 }

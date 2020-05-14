@@ -2,6 +2,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include <ctime>
+#include <stdexcept>
 
 #define DEFAULT_LOG_OUTPUT  CON
 #define DEFAULT_LOG_LEVEL   NA
@@ -137,7 +138,7 @@ Logger::Logger()
         fp = ::fopen(logFile,"w");
         if(!fp)
         {
-            throw;
+            throw std::runtime_error("Can't open log file");
         }
     }
 }
@@ -155,7 +156,7 @@ void Logger::fillLogFileName()
     unsigned const logFileNameLen = std::strlen(getLogFolder()) + std::strlen(getAppName()) + 10;
     if (logFileNameLen > sizeof(logFile))
     {
-        throw;
+        throw std::runtime_error("Too huge log file name");
     }
     sprintf(logFile, "%s/%s.log", getLogFolder(), getAppName());
 }
