@@ -6,11 +6,11 @@
 namespace sg
 {
 
-enum LogOutput
+enum class LogOutput
 {
     CON,
     FILE,
-    DISABLED
+    NA
 };
 
 enum LogLevel
@@ -19,7 +19,7 @@ enum LogLevel
     LI,
     LW,
     LE,
-    LN
+    NA
 };
 
 #define LM(LM_LEVEL, ...) \
@@ -35,18 +35,26 @@ enum LogLevel
 class Logger
 {
 public:
-    
+
     static Logger& getInst();
-    
+
     void dispatch(char const* msg, LogLevel lvl, char const* file, int line);
 
     LogLevel currentLogLevel() const;
 
     void setLogLevel(LogLevel);
 
+    char const* getLogLevelStr() const;
+
+    char const* getLogOutputStr() const;
+
+    char const* getLogFile() const;
+
 private:
     Logger();
     ~Logger();
+
+    void fillLogFileName();
 
     Logger(Logger const&)          = delete;
     void operator=(Logger const&)  = delete;
@@ -54,7 +62,7 @@ private:
     ::FILE *fp;
     const LogOutput logOutput;
     LogLevel        logLevel;
-    const char*     logFileName;
+    char            logFile[128];
 };
 
 }

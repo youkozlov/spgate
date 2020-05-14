@@ -4,6 +4,7 @@
 #include "BusGate.hpp"
 #include "utils/TickUtils.hpp"
 #include "utils/Utils.hpp"
+#include "utils/Logger.hpp"
 
 #ifndef QMAKE_VARIANT
 #include "SpGateConfig.hpp"
@@ -78,11 +79,15 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    auto& logger = sg::Logger::getInst();
 
     std::cout << PROJECT_NAME << " " << PROJECT_VER << "\n"
               << "Build: " << GIT_BUILD_INFO << "\n"
               << "config: " <<  configArg << "\n"
               << "cli_port: " << cliportInt << "\n"
+              << "loglevel: " << logger.getLogLevelStr() << std::endl
+              << "logoutput: " << logger.getLogOutputStr() << std::endl
+              << "logfile: " << logger.getLogFile() << std::endl
               << std::endl;
 
     sg::BusGate::Init init{configArg, cliportInt};

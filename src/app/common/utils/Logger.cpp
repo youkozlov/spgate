@@ -3,9 +3,10 @@
 #include "stdlib.h"
 #include <ctime>
 
-#define DEFAULT_LOG_OUTPUT CON
-#define DEFAULT_LOG_LEVEL  LN
-#define DEFAULT_LOG_FILE   "/tmp/spgate.log"
+#define DEFAULT_LOG_OUTPUT  CON
+#define DEFAULT_LOG_LEVEL   NA
+#define DEFAULT_LOG_FOLDER  "/tmp"
+#define DEFAULT_LOG_APPNAME "spgate"
 
 namespace sg
 {
@@ -22,8 +23,22 @@ char const* toString(LogLevel lvl)
         return "WARNING";
     case LogLevel::LE:
         return "ERROR";
-    case LogLevel::LN:
-        return "DISABLED";
+    case LogLevel::NA:
+        return "NA";
+    }
+    return "INVALID";
+}
+
+char const* toString(LogOutput lout)
+{
+    switch(lout)
+    {
+    case LogOutput::CON:
+        return "CON";
+    case LogOutput::FILE:
+        return "FILE";
+    case LogOutput::NA:
+        return "NA";
     }
     return "INVALID";
 }
@@ -84,12 +99,12 @@ LogLevel getLogLevel()
     }
 }
 
-char const* getLogFileName()
+char const* getLogFolder()
 {
-    char const* env = ::getenv("SG_LOGFILE");
+    char const* env = ::getenv("SG_LOGFOLDER");
     if (!env)
     {
-        return DEFAULT_LOG_FILE;
+        return DEFAULT_LOG_FOLDER;
     }
     else
     {
@@ -97,15 +112,29 @@ char const* getLogFileName()
     }
 }
 
+char const* getAppName()
+{
+    char const* env = ::getenv("_");
+    if (!env)
+    {
+        return DEFAULT_LOG_APPNAME;
+    }
+    else
+    {
+        auto* pos = std::strrchr(env, '/');
+        return pos ? pos + 1 : env;
+    }
+}
+
 Logger::Logger()
     : fp(nullptr)
     , logOutput(getLogOutput())
-    , logLevel(logOutput == LogOutput::DISABLED ? LogLevel::LN : getLogLevel())
-    , logFileName(getLogFileName())
+    , logLevel(logOutput == LogOutput::NA ? LogLevel::NA : getLogLevel())
 {
+    fillLogFileName();
     if (logOutput == LogOutput::FILE)
     {
-        fp = ::fopen(logFileName,"w");
+        fp = ::fopen(logFile,"w");
         if(!fp)
         {
             throw;
@@ -119,6 +148,16 @@ Logger::~Logger()
     {
         ::fclose(fp);
     }
+}
+
+void Logger::fillLogFileName()
+{
+    unsigned const logFileNameLen = std::strlen(getLogFolder()) + std::strlen(getAppName()) + 10;
+    if (logFileNameLen > sizeof(logFile))
+    {
+        throw;
+    }
+    sprintf(logFile, "%s/%s.log", getLogFolder(), getAppName());
 }
 
 Logger& Logger::getInst()
@@ -135,6 +174,21 @@ LogLevel Logger::currentLogLevel() const
 void Logger::setLogLevel(LogLevel lvl)
 {
     logLevel = lvl;
+}
+
+char const* Logger::getLogLevelStr() const
+{
+    return toString(logLevel);
+}
+
+char const* Logger::getLogOutputStr() const
+{
+    return toString(logOutput);
+}
+
+char const* Logger::getLogFile() const
+{
+    return logFile;
 }
 
 void Logger::dispatch(char const* msg, LogLevel lvl, char const* file, int line)

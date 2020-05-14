@@ -49,7 +49,7 @@ bool CmdArgLogLevel::setValue(char const* buf)
         lvl = LogLevel::LE;
     break;
     case 4:
-        lvl = LogLevel::LN;
+        lvl = LogLevel::NA;
     break;
     default:
         return false;
