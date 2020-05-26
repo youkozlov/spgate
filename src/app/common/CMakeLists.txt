@@ -4,6 +4,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DEBUG -O0 -g -ggdb -Wextra -Wall -Wpeda
 
 add_library(common
 
+    utils/Logger.cpp
     utils/Utils.cpp
     utils/ParamParser.cpp
     utils/Timer.cpp
