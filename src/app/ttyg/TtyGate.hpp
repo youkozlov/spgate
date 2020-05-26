@@ -17,12 +17,6 @@ class Link;
 namespace ttyg
 {
 
-enum class Mode
-{
-    real,
-    stub
-};
-
 class TtyGate
 {
 public:
