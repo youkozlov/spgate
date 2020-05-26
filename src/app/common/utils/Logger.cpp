@@ -200,13 +200,14 @@ void Logger::dispatch(char const* msg, LogLevel lvl, char const* file, int line)
     struct tm * timeinfo = localtime(&rawtime);
     strftime(strTimeInfo,sizeof(strTimeInfo),"%d-%m-%Y %H:%M:%S",timeinfo);
     char const* filePart = strrchr(file, '/');
+    char const* fileToLog = filePart ? filePart + 1 : file;
     switch (logOutput)
     {
     case LogOutput::CON:
-        printf("%s %s %s %d: %s\n", strTimeInfo, toString(lvl), filePart ? filePart + 1 : file, line, msg);
+        printf("%s %s %s %d: %s\n", strTimeInfo, toString(lvl), fileToLog, line, msg);
     break;
     case LogOutput::FILE:
-        fprintf(fp, "%s %s %s %d: %s\n", strTimeInfo, toString(lvl), filePart ? filePart + 1 : file, line, msg);
+        fprintf(fp, "%s %s %s %d: %s\n", strTimeInfo, toString(lvl), fileToLog, line, msg);
     break;
     default:
     break;
