@@ -6,20 +6,17 @@
 #include "utils/TickUtils.hpp"
 #include <algorithm>
 
-static constexpr unsigned int recvTimeoutMs  = 2000;
-static constexpr unsigned int errorTimeoutMs = 5000;
-
 namespace sg
 {
 
-ClientFsm::ClientFsm(Client& g)
+ClientFsm::ClientFsm(Client& client_, unsigned recvTimeoutMs)
     : state(State::init)
-    , client(g)
+    , client(client_)
     , tick(0)
     , recvTimer(recvTimeoutMs)
     , idleTimer(client.period())
-    , errorTimer(errorTimeoutMs)
-    , timeoutTimer(errorTimeoutMs * 2)
+    , errorTimer(recvTimeoutMs * 2)
+    , timeoutTimer(recvTimeoutMs * 2)
 {
 }
 

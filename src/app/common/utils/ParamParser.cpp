@@ -493,9 +493,14 @@ bool ParamParser::parseGates(rlIniFile& parser, char const* gateName)
         return parseValue(prms.addr, str);
     });
 
-    parseName(parser, gateName, "read_period", mandatory, [&prms](const char* str)
+    parseName(parser, gateName, "request_periodicity", mandatory, [&prms](const char* str)
     {
         return parseReadPeriod(prms.readPeriod, str);
+    });
+
+    parseName(parser, gateName, "request_timeout", mandatory, [&prms](const char* str)
+    {
+        return parseReadPeriod(prms.readTimeout, str);
     });
 
     gates.push_back(prms);

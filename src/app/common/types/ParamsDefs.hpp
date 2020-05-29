@@ -105,6 +105,7 @@ struct GateParams
     IpAddr       gateAddr;
     BusAddr      addr;
     unsigned int readPeriod;
+    unsigned int readTimeout;
     
     GateParams()
     {

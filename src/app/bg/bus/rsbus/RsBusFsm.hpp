@@ -28,7 +28,7 @@ public:
         timeout
     };
 
-    explicit RsBusFsm(RsBus&);
+    explicit RsBusFsm(RsBus&, unsigned recvTimeoutMs);
 
     void tickInd();
 

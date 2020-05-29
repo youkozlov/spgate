@@ -10,8 +10,7 @@ class Client;
 class ClientFsm
 {
 public:
-
-    explicit ClientFsm(Client&);
+    explicit ClientFsm(Client&, unsigned recvTimeoutMs);
 
     ~ClientFsm();
 

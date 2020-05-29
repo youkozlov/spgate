@@ -16,7 +16,7 @@ int SpBusRx::receive(unsigned char* buf, unsigned int maxLen)
 {
     unsigned int rxLen = 0;
 
-    int len = link.read(buf, 8, 300);
+    int len = link.read(buf, 8, 50);
 
     if (!len)
     {

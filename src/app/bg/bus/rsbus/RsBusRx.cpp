@@ -31,7 +31,7 @@ int RsBusRx::receive(unsigned char* buf, unsigned int maxLen)
 
     while (1)
     {
-        int len = link.read(&buf[rxLen], 1, 300);
+        int len = link.read(&buf[rxLen], 1, 50);
 
         if (!len)
         {

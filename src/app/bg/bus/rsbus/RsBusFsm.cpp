@@ -10,10 +10,8 @@ namespace rsbus
 {
 
 constexpr unsigned int startSeqSendPeriodMs = 5;
-constexpr unsigned int recvTimeoutMs        = 2000;
-constexpr unsigned int errorTimeoutMs       = 5000;
 
-RsBusFsm::RsBusFsm(RsBus& b)
+RsBusFsm::RsBusFsm(RsBus& b, unsigned recvTimeoutMs)
     : bus(b)
     , state(State::init)
     , tick(0)
@@ -21,8 +19,8 @@ RsBusFsm::RsBusFsm(RsBus& b)
     , sendStartSeqTimer(startSeqSendPeriodMs)
     , recvTimer(recvTimeoutMs)
     , idleTimer(bus.period())
-    , errorTimer(errorTimeoutMs)
-    , timeoutTimer(errorTimeoutMs * 2)
+    , errorTimer(recvTimeoutMs * 2)
+    , timeoutTimer(recvTimeoutMs * 2)
 {
 }
 

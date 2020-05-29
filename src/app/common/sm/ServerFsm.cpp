@@ -50,7 +50,7 @@ void ServerFsm::close()
 
 void ServerFsm::init()
 {
-    if (tick % 128 == 0)
+    if (tick % 4 == 0)
     {
         changeState(ServerFsmState::accept);
     }
@@ -75,7 +75,7 @@ void ServerFsm::process()
 
 void ServerFsm::error()
 {
-    if (tick % 1024 == 0)
+    if (tick % 4 == 0)
     {
         changeState(ServerFsmState::init);
     }
