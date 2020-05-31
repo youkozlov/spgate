@@ -1,5 +1,6 @@
 #include <iostream>
 #include <getopt.h>
+#include <signal.h>
 #include <cstring>
 #include "TtyGate.hpp"
 #include "utils/TickUtils.hpp"
@@ -21,8 +22,17 @@ void showUsage(int, char** argv)
               << std::endl;
 }
 
+static volatile int done = 0;
+
+void intHandler(int)
+{
+    done = 1;
+}
+
 int main(int argc, char** argv)
 {
+    signal(SIGINT, intHandler);
+
     struct ConfigItem
     {
         char const* defaultVal;
@@ -76,7 +86,7 @@ int main(int argc, char** argv)
     {
         ttyg::TtyGate::Init init{configArg};
         ttyg::TtyGate tg(init);
-        while (1)
+        while (!done)
         {
             tg.tickInd();
             sg::Utils::nsleep(sg::TickUtils::getTickPeriod());

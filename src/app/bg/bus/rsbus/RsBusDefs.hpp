@@ -10,12 +10,13 @@ namespace rsbus
 
 enum DeviceType : uint16_t
 {
-    type741 = 0x4729,
-    type742 = 0x472A,
-    type743 = 0x472B,
-    type941 = 0x5429,
-    type942 = 0x542A,
-    type943 = 0x542B
+    type741  = 0x4729,
+    type742  = 0x472A,
+    type743  = 0x472B,
+    type9411 = 0x9229,
+    type941  = 0x5429,
+    type942  = 0x542A,
+    type943  = 0x542B
 };
 
 constexpr uint8_t FSC = 0x10;

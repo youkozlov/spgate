@@ -1,6 +1,6 @@
 #include <iostream>
 #include <getopt.h>
-
+#include <signal.h>
 #include "BusGate.hpp"
 #include "utils/TickUtils.hpp"
 #include "utils/Utils.hpp"
@@ -23,8 +23,17 @@ void showUsage(int, char** argv)
               << std::endl;
 }
 
+static volatile int done = 0;
+
+void intHandler(int)
+{
+    done = 1;
+}
+
 int main(int argc, char** argv)
 {
+    signal(SIGINT, intHandler);
+
     struct ConfigItem
     {
         char const* defaultVal;
@@ -113,7 +122,7 @@ int main(int argc, char** argv)
 
     try
     {
-        while (1)
+        while (!done)
         {
             if (bg.tickInd())
             {

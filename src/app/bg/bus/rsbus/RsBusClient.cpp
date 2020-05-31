@@ -136,6 +136,7 @@ int RsBusClient::recvSessionRsp()
     case DeviceType::type741:
     case DeviceType::type742:
     case DeviceType::type743:
+    case DeviceType::type9411:
     case DeviceType::type941:
     case DeviceType::type942:
     case DeviceType::type943:
