@@ -24,7 +24,7 @@ NAME=spgate
 DAEMON=/usr/local/bin/$NAME
 DAEMON_ARGS="--config /etc/spgate.ini"
 PIDFILE=/var/run/$NAME.pid
-SCRIPTNAME=/etc/init.d/$NAME.sh
+SCRIPTNAME=/etc/init.d/$NAME
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0

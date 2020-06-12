@@ -69,7 +69,7 @@ cd ..
 
 
 echo "Активация автозапуска приложения"
-sshpass -e ssh root@$CIP 'update-rc.d spgate enable'
+sshpass -e ssh root@$CIP 'update-rc.d spgate defaults'
 if [ $? != 0 ]
     then
     exit_script
