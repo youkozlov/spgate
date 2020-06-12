@@ -63,6 +63,9 @@ cd tmp
 sshpass -e scp -r . root@$CIP:/
 if [ $? != 0 ]
     then
+    echo "Убедитесь, что подключение по SSH доступно."
+    echo "Пример:"
+    echo "    $ ssh root@$CIP"
     exit_script
 fi
 cd ..
