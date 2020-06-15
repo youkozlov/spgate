@@ -87,6 +87,10 @@ bool parseValue(ParamType& prm, const char* str)
     {
         prm = ParamType::fixedPoint;
     }
+    else if (!strcmp(str, "real"))
+    {
+        prm = ParamType::real;
+    }
     else
     {
         LM(LE, "Unexpected value: %s, len: %zu", str, strlen(str));

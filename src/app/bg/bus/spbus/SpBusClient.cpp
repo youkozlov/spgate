@@ -162,6 +162,12 @@ int SpBusClient::receive()
         regs.setValue(item.prms.id, netFixed);
         stats.nRsp += 1;
     }
+    else if (prms.type == ParamType::real
+            && sscanf(frame.data.infos[0].value.param, "%f", &floatValue) == 1)
+    {
+        regs.setValue(item.prms.id, floatValue);
+        stats.nRsp += 1;
+    }
     else
     {
         regs.setStatus(item.prms.id, RegAccessor::invalid);

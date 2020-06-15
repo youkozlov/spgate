@@ -128,7 +128,8 @@ struct DeviceParams
 enum class ParamType
 {
     floatPoint,
-    fixedPoint
+    fixedPoint,
+    real
 };
 
 struct ParamParams

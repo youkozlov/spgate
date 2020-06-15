@@ -240,7 +240,8 @@ int RsBusClient::recvDataRsp()
     float rsbusFloat{};
     memcpy(&rsbusFloat, frame.data, sizeof(float));
     float const valFloat = Utils::decodeRsBus(rsbusFloat);
-    float const netFloat = Utils::reverse(valFloat);
+
+    float const netFloat = (item.prms.type == ParamType::real) ? valFloat : Utils::reverse(valFloat);
 
     regs.setValue(item.prms.id, netFloat);
 
