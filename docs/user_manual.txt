@@ -92,5 +92,4 @@ Options:
       $ ps -ef | grep spgate
     - после внесения изменений в файл конфигурации необходимо сохранить файл, а также перезагрузить контроллер, либо перезапустить сервис
       $ nano /etc/spgate.ini
-      $ service spgate stop
-      $ service spgate start
+      $ service spgate restart
