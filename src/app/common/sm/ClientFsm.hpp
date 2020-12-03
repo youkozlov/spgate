@@ -24,6 +24,7 @@ private:
         idle,
         send,
         receive,
+        disconnect,
         error,
         timeout
     };
@@ -33,6 +34,7 @@ private:
     void idle();
     void send();
     void receive();
+    void disconnect();
     void error();
     void timeout();
 

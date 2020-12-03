@@ -44,6 +44,8 @@ public:
 
     int receive() final;
 
+    void disconnect() final;
+
     unsigned int period() const final;
 
     void reset() final;

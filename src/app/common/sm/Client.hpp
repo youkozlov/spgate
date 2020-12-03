@@ -16,6 +16,8 @@ public:
 
     virtual int connect() = 0;
 
+    virtual void disconnect() = 0;
+
     virtual void reset() = 0;
 
     virtual void timeout() = 0;

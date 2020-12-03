@@ -74,6 +74,12 @@ int SpBusClient::send()
     stats.nRdp += 1;
     stats.nTx  += 1;
 
+    LM(LI, "Send dad=%u sad=%u ch=%u addr=%u"
+        , frame.hdr.dad
+        , frame.hdr.sad
+        , prms.chan
+        , prms.addr);
+
     return link->write(txBuf.cbegin(), txBuf.size());
 }
 
@@ -174,7 +180,19 @@ int SpBusClient::receive()
         stats.nInvalid += 1;
     }
 
+    LM(LI, "Receive dad=%u sad=%u ch=%u addr=%u value=%s"
+        , frame.hdr.dad
+        , frame.hdr.sad
+        , prms.chan
+        , prms.addr
+        , frame.data.infos[0].value.param);
+
     return len;
+}
+
+void SpBusClient::disconnect()
+{
+    link->close();
 }
 
 unsigned int SpBusClient::period() const

@@ -43,6 +43,9 @@ void ClientFsm::tickInd()
     case State::receive:
         receive();
     break;
+    case State::disconnect:
+        disconnect();
+    break;
     case State::error:
         error();
     break;
@@ -58,6 +61,15 @@ void ClientFsm::init()
 {
     if (tick % 128 == 0)
     {
+        idleTimer.set();
+        changeState(State::idle);
+    }
+}
+
+void ClientFsm::idle()
+{
+    if (idleTimer.expired())
+    {
         changeState(State::connect);
     }
 }
@@ -71,14 +83,6 @@ void ClientFsm::connect()
         changeState(State::error);
     }
     else
-    {
-        changeState(State::send);
-    }
-}
-
-void ClientFsm::idle()
-{
-    if (idleTimer.expired())
     {
         changeState(State::send);
     }
@@ -116,9 +120,15 @@ void ClientFsm::receive()
     }
     else if (result)
     {
-        idleTimer.set();
-        changeState(State::idle);
+        changeState(State::disconnect);
     }
+}
+
+void ClientFsm::disconnect()
+{
+    client.disconnect();
+    idleTimer.set();
+    changeState(State::idle);
 }
 
 void ClientFsm::error()
@@ -133,8 +143,7 @@ void ClientFsm::timeout()
 {
     if (timeoutTimer.expired())
     {
-        idleTimer.set();
-        changeState(State::idle);
+        changeState(State::disconnect);
     }
 }
 
@@ -158,6 +167,8 @@ char const* ClientFsm::toString(State st) const
         return "Send";
     case State::receive:
         return "Receive";
+    case State::disconnect:
+        return "Disconnect";
     case State::error:
         return "Error";
     case State::timeout:
