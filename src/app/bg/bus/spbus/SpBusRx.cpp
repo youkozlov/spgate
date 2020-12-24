@@ -16,17 +16,24 @@ int SpBusRx::receive(unsigned char* buf, unsigned int maxLen)
 {
     unsigned int rxLen = 0;
 
-    int len = link.read(buf, 8, 50);
+    buf[0] = 0;
 
-    if (!len)
+    do
     {
-        return len;
+        int len = link.read(buf, 1, 50);
+
+        if (!len)
+        {
+            return len;
+        }
+        else if (len < 0)
+        {
+            return len;
+        }
     }
-    else if (len < 0)
-    {
-        return len;
-    }
-    rxLen += len;
+    while (buf[0] != DLE);
+
+    rxLen += 1;
 
     do
     {
@@ -42,7 +49,7 @@ int SpBusRx::receive(unsigned char* buf, unsigned int maxLen)
             return invalid;
         }
     }
-    while (not (buf[rxLen - 4] == DLE && buf[rxLen - 3] == ETX));
+    while ((rxLen < 4) || not (buf[rxLen - 4] == DLE && buf[rxLen - 3] == ETX));
 
     return rxLen;
 }
