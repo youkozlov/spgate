@@ -42,7 +42,7 @@ public:
 
     int send() final;
 
-    int receive() final;
+    Result receive() final;
 
     void disconnect() final;
 
@@ -50,11 +50,10 @@ public:
 
     void reset() final;
 
-    void timeout() final;
+    Result timeout() final;
 
 private:
-    
-    GateReadItem const& getNext();
+
     GateReadItem const& getCurrent() const;
     int                 receiveFrame(SpBusFrame&);
 

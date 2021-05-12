@@ -34,14 +34,35 @@ int SpBusRx::receive(unsigned char* buf, unsigned int maxLen)
     while (buf[0] != DLE);
 
     rxLen += 1;
-
+    
+    unsigned timeoutCounter = 0;
+    constexpr unsigned maxNumReadTimeouts = 1000;
     do
     {
-        if (link.read(&buf[rxLen], 1, 50) != 1)
+        int result = link.read(&buf[rxLen], 1, 50);
+        if (!result)
         {
-            LM(LE, "Function result is unexpected");
+            timeoutCounter += 1;
+            if (timeoutCounter < maxNumReadTimeouts)
+            {
+                continue;
+            }
+            else
+            {
+                LM(LE, "Timeout while receive");
+                return invalid;
+            }
+        }
+        else if (result < 0)
+        {
+            LM(LE, "Function result(%d) is unexpected", result);
             return invalid;
         }
+        else
+        {
+            timeoutCounter = 0;
+        }
+
         rxLen += 1;
         if (rxLen >= maxLen)
         {

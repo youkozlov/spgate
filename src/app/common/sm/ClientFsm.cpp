@@ -16,7 +16,6 @@ ClientFsm::ClientFsm(Client& client_, unsigned recvTimeoutMs)
     , recvTimer(recvTimeoutMs)
     , idleTimer(client.period())
     , errorTimer(recvTimeoutMs * 2)
-    , timeoutTimer(recvTimeoutMs * 2)
 {
 }
 
@@ -48,9 +47,6 @@ void ClientFsm::tickInd()
     break;
     case State::error:
         error();
-    break;
-    case State::timeout:
-        timeout();
     break;
     }
 
@@ -105,22 +101,32 @@ void ClientFsm::send()
 
 void ClientFsm::receive()
 {
-    int result = client.receive();
-    if (result < 0)
+    Client::Result result = client.receive();
+    if (Client::Result::fail == result)
     {
         client.reset();
         errorTimer.set();
         changeState(State::error);
     }
-    else if (recvTimer.expired())
-    {
-        client.timeout();
-        timeoutTimer.set();
-        changeState(State::timeout);
-    }
-    else if (result)
+    else if (Client::Result::done == result)
     {
         changeState(State::disconnect);
+    }
+    else if (Client::Result::progress == result)
+    {
+        changeState(State::send);
+    }
+    else if (recvTimer.expired())
+    {
+        Client::Result tres = client.timeout();
+        if (Client::Result::progress == tres)
+        {
+            changeState(State::send);
+        }
+        else if (Client::Result::done == tres)
+        {
+            changeState(State::disconnect);
+        }
     }
 }
 
@@ -136,14 +142,6 @@ void ClientFsm::error()
     if (errorTimer.expired())
     {
         changeState(State::init);
-    }
-}
-
-void ClientFsm::timeout()
-{
-    if (timeoutTimer.expired())
-    {
-        changeState(State::disconnect);
     }
 }
 
@@ -171,8 +169,6 @@ char const* ClientFsm::toString(State st) const
         return "Disconnect";
     case State::error:
         return "Error";
-    case State::timeout:
-        return "Timeout";
     default:
         return "Invalid";
     }

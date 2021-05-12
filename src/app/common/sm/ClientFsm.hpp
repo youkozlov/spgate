@@ -25,8 +25,7 @@ private:
         send,
         receive,
         disconnect,
-        error,
-        timeout
+        error
     };
 
     void init();
@@ -36,7 +35,6 @@ private:
     void receive();
     void disconnect();
     void error();
-    void timeout();
 
     void changeState(State);
     char const* toString(State) const;
@@ -48,6 +46,5 @@ private:
     Timer  recvTimer;
     Timer  idleTimer;
     Timer  errorTimer;
-    Timer  timeoutTimer;
 };
 }

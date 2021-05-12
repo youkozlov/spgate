@@ -48,7 +48,7 @@ int SpBusClient::connect()
 
 int SpBusClient::send()
 {
-    auto& item   = getNext();
+    auto& item   = getCurrent();
     auto& device = item.device;
     auto& prms   = item.prms;
 
@@ -74,7 +74,9 @@ int SpBusClient::send()
     stats.nRdp += 1;
     stats.nTx  += 1;
 
-    LM(LI, "Send dad=%u sad=%u ch=%u addr=%u"
+    LM(LI, "Process paramIdx=%u/%u send dad=%u sad=%u ch=%u addr=%u"
+        , currentParamId
+        , storage.getNumItems()
         , frame.hdr.dad
         , frame.hdr.sad
         , prms.chan
@@ -124,12 +126,12 @@ int SpBusClient::receiveFrame(SpBusFrame& frame)
         return 0;
     }
 
-    stats.nRx  += 1;
+    stats.nRx += 1;
 
     return len;
 }
 
-int SpBusClient::receive()
+Client::Result SpBusClient::receive()
 {
     auto& item = getCurrent();
     auto& prms = item.prms;
@@ -143,11 +145,12 @@ int SpBusClient::receive()
 
     if (!len)
     {
-        return len;
+        return Result::waitForData;
     }
     else if (len < 0)
     {
         stats.nError += 1;
+        return Result::fail;
     }
     else if (!frame.data.numInfos)
     {
@@ -180,14 +183,23 @@ int SpBusClient::receive()
         stats.nInvalid += 1;
     }
 
-    LM(LI, "Receive dad=%u sad=%u ch=%u addr=%u value=%s"
+    LM(LI, "Process paramIdx=%u/%u receive dad=%u sad=%u ch=%u addr=%u value=%s"
+        , currentParamId
+        , storage.getNumItems()
         , frame.hdr.dad
         , frame.hdr.sad
         , prms.chan
         , prms.addr
         , frame.data.infos[0].value.param);
 
-    return len;
+    currentParamId += 1;
+    if (currentParamId == storage.getNumItems())
+    {
+        currentParamId = 0;
+        LM(LI, "All params processed");
+        return Result::done;
+    }
+    return Result::progress;
 }
 
 void SpBusClient::disconnect()
@@ -211,16 +223,24 @@ void SpBusClient::reset()
     link->close();
 }
 
-void SpBusClient::timeout()
+Client::Result SpBusClient::timeout()
 {
+    LM(LI, "Process paramIdx=%u/%u timeout"
+        , currentParamId
+        , storage.getNumItems());
+
     auto& item = getCurrent();
     regs.setStatus(item.prms.id, RegAccessor::timeout);
     stats.nTimeout += 1;
-}
-
-GateReadItem const& SpBusClient::getNext()
-{
-    return storage.getItem((++currentParamId) % storage.getNumItems());
+    
+    currentParamId += 1;
+    if (currentParamId == storage.getNumItems())
+    {
+        currentParamId = 0;
+        LM(LI, "All params processed");
+        return Result::done;
+    }
+    return Result::progress;
 }
 
 GateReadItem const& SpBusClient::getCurrent() const
