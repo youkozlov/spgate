@@ -19,8 +19,12 @@ public:
     explicit RsBusCodec(WrapBuffer&, RsBusFrame&);
 
     bool encode();
+    bool encodeReqLong();
+    bool encodeRspLong();
 
     bool decode();
+    bool decodeRspLong();
+    bool decodeReqLong();
 
 private:
     WrapBuffer& buf;

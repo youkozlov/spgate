@@ -171,13 +171,13 @@ bool BusGate::createGatesClient()
         {
         case GateType::sps:
         {
-            SpBusClient::Init init{gatePrms, parser, regAccessor, spbusStats};
+            SpBusClient::Init init{gatePrms, parser, regAccessor, spbusStats, linkLocker};
             gates[i] = std::unique_ptr<Bus>(new SpBusClient(init));
         }
         break;
         case GateType::m4:
         {
-            rsbus::RsBusClient::Init init{gatePrms, parser, regAccessor, rsbusStats};
+            rsbus::RsBusClient::Init init{gatePrms, parser, regAccessor, rsbusStats, linkLocker};
             gates[i] = std::unique_ptr<Bus>(new rsbus::RsBusClient(init));
         }
         break;

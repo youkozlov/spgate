@@ -17,15 +17,16 @@ public:
     enum class State
     {
         init,
+        idle,
+        waitingForLinkLock,
         connect,
         sendStartSequence,
         sendSessionReq,
         recvSessionRsp,
-        idle,
         sendDataReq,
         recvDataRsp,
-        error,
-        timeout
+        disconnect,
+        error
     };
 
     explicit RsBusFsm(RsBus&, unsigned recvTimeoutMs);
@@ -35,15 +36,16 @@ public:
 private:
 
     void init();
+    void idle();
     void connect();
+    void waitingForLinkLock();
     void sendStartSequence();
     void sendSessionReq();
     void recvSessionRsp();
-    void idle();
     void sendDataReq();
     void recvDataRsp();
+    void disconnect();
     void error();
-    void timeout();
 
     void changeState(State);
     char const* toString(State) const;
@@ -56,7 +58,6 @@ private:
     Timer  recvTimer;
     Timer  idleTimer;
     Timer  errorTimer;
-    Timer  timeoutTimer;
 };
 
 }

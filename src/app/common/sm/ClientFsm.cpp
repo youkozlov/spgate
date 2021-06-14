@@ -36,6 +36,9 @@ void ClientFsm::tickInd()
     case State::idle:
         idle();
     break;
+    case State::waitingForLinkLock:
+        waitingForLinkLock();
+    break;
     case State::send:
         send();
     break;
@@ -65,6 +68,14 @@ void ClientFsm::init()
 void ClientFsm::idle()
 {
     if (idleTimer.expired())
+    {
+        changeState(State::waitingForLinkLock);
+    }
+}
+
+void ClientFsm::waitingForLinkLock()
+{
+    if (client.tryLock())
     {
         changeState(State::connect);
     }
@@ -141,7 +152,8 @@ void ClientFsm::error()
 {
     if (errorTimer.expired())
     {
-        changeState(State::init);
+        idleTimer.set();
+        changeState(State::idle);
     }
 }
 
@@ -161,6 +173,8 @@ char const* ClientFsm::toString(State st) const
         return "Connect";
     case State::idle:
         return "Idle";
+    case State::waitingForLinkLock:
+        return "WaitingForLinkLock";
     case State::send:
         return "Send";
     case State::receive:

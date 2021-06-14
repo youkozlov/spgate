@@ -20,7 +20,6 @@ RsBusFsm::RsBusFsm(RsBus& b, unsigned recvTimeoutMs)
     , recvTimer(recvTimeoutMs)
     , idleTimer(bus.period())
     , errorTimer(recvTimeoutMs * 2)
-    , timeoutTimer(recvTimeoutMs * 2)
 {
 }
 
@@ -33,6 +32,9 @@ void RsBusFsm::tickInd()
     break;
     case State::connect:
         connect();
+    break;
+    case State::waitingForLinkLock:
+        waitingForLinkLock();
     break;
     case State::sendStartSequence:
         sendStartSequence();
@@ -52,11 +54,11 @@ void RsBusFsm::tickInd()
     case State::recvDataRsp:
         recvDataRsp();
     break;
+    case State::disconnect:
+        disconnect();
+    break;
     case State::error:
         error();
-    break;
-    case State::timeout:
-        timeout();
     break;
     }
 
@@ -66,6 +68,22 @@ void RsBusFsm::tickInd()
 void RsBusFsm::init()
 {
     if (tick % 128 == 0)
+    {
+        changeState(State::idle);
+    }
+}
+
+void RsBusFsm::idle()
+{
+    if (idleTimer.expired())
+    {
+        changeState(State::waitingForLinkLock);
+    }
+}
+
+void RsBusFsm::waitingForLinkLock()
+{
+    if (bus.tryLock())
     {
         changeState(State::connect);
     }
@@ -137,19 +155,11 @@ void RsBusFsm::recvSessionRsp()
     }
     else if (recvTimer.expired())
     {
-        bus.timeout();
-        timeoutTimer.set();
-        changeState(State::timeout);
+        bus.reset();
+        errorTimer.set();
+        changeState(State::error);
     }
     else if (result)
-    {
-        changeState(State::sendDataReq);
-    }
-}
-
-void RsBusFsm::idle()
-{
-    if (idleTimer.expired())
     {
         changeState(State::sendDataReq);
     }
@@ -172,41 +182,48 @@ void RsBusFsm::sendDataReq()
 
 void RsBusFsm::recvDataRsp()
 {
-    int result = bus.recvDataRsp();
-    if (result < 0)
+    RsBus::Result result = bus.recvDataRsp();
+    if (RsBus::Result::fail == result)
     {
         bus.reset();
         errorTimer.set();
         changeState(State::error);
     }
+    else if (RsBus::Result::done == result)
+    {
+        changeState(State::disconnect);
+    }
+    else if (RsBus::Result::progress == result)
+    {
+        changeState(State::sendDataReq);
+    }
     else if (recvTimer.expired())
     {
-        bus.timeout();
-        timeoutTimer.set();
-        changeState(State::timeout);
+        RsBus::Result tres = bus.timeout();
+        if (RsBus::Result::progress == tres)
+        {
+            changeState(State::sendDataReq);
+        }
+        else if (RsBus::Result::done == tres)
+        {
+            changeState(State::disconnect);
+        }
     }
-    else if (result)
-    {
-        idleTimer.set();
-        changeState(State::idle);
-    }
+}
+
+void RsBusFsm::disconnect()
+{
+    bus.disconnect();
+    idleTimer.set();
+    changeState(State::idle);
 }
 
 void RsBusFsm::error()
 {
     if (errorTimer.expired())
     {
-        changeState(State::init);
-    }
-}
-
-void RsBusFsm::timeout()
-{
-    if (timeoutTimer.expired())
-    {
-        startSequenceCounter = 0;
-        sendStartSeqTimer.set();
-        changeState(State::sendStartSequence);
+        idleTimer.set();
+        changeState(State::idle);
     }
 }
 
@@ -222,24 +239,26 @@ char const* RsBusFsm::toString(State st) const
     {
     case State::init:
         return "Init";
+    case State::idle:
+        return "Idle";
     case State::connect:
         return "Connect";
+    case State::waitingForLinkLock:
+        return "WaitingForLinkLock";
     case State::sendStartSequence:
         return "SendStartSequence";
     case State::sendSessionReq:
         return "SendSessionReq";
     case State::recvSessionRsp:
         return "RecvSessionRsp";
-    case State::idle:
-        return "Idle";
     case State::sendDataReq:
         return "SendDataReq";
     case State::recvDataRsp:
         return "RecvDataRsp";
+    case State::disconnect:
+        return "Disconnect";
     case State::error:
         return "Error";
-    case State::timeout:
-        return "Timeout";
     default:
         return "Invalid";
     }

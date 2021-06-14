@@ -1,6 +1,6 @@
 add_subdirectory(common)
 add_subdirectory(bg)
-add_subdirectory(ttyg)
+##add_subdirectory(ttyg)
 
 execute_process(
   COMMAND git rev-parse --abbrev-ref HEAD

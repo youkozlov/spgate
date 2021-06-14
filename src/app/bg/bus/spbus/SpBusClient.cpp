@@ -24,6 +24,7 @@ SpBusClient::SpBusClient(Init const& init)
     , fsm(*this, gateParams.readTimeout)
     , link(std::unique_ptr<Link>(new LinkRl(gateParams.gateAddr)))
     , rx(*link)
+    , linkLocker(init.linkLocker)
     , currentParamId(0)
 {
     if (!storage.configure(gateParams))
@@ -204,6 +205,7 @@ Client::Result SpBusClient::receive()
 
 void SpBusClient::disconnect()
 {
+    linkLocker.unlock();
     link->close();
 }
 
@@ -220,6 +222,7 @@ void SpBusClient::reset()
         regs.setStatus(item.prms.id, RegAccessor::timeout);
     }
     currentParamId = 0;
+    linkLocker.unlock();
     link->close();
 }
 
@@ -241,6 +244,11 @@ Client::Result SpBusClient::timeout()
         return Result::done;
     }
     return Result::progress;
+}
+
+bool SpBusClient::tryLock()
+{
+    return linkLocker.tryLock();
 }
 
 GateReadItem const& SpBusClient::getCurrent() const

@@ -7,6 +7,7 @@
 #include "sm/Client.hpp"
 #include "sm/ClientFsm.hpp"
 
+#include "LinkLocker.hpp"
 #include "GateStorage.hpp"
 #include "SpBusRx.hpp"
 
@@ -30,6 +31,7 @@ public:
         ParamParser const& parser;
         RegAccessor&       regs;
         BusStats&          stats;
+        LinkLocker&        linkLocker;
     };
 
     explicit SpBusClient(Init const&);
@@ -51,6 +53,8 @@ public:
     void reset() final;
 
     Result timeout() final;
+    
+    bool tryLock() final;
 
 private:
 
@@ -64,6 +68,7 @@ private:
     ClientFsm             fsm;
     std::unique_ptr<Link> link;
     SpBusRx               rx;
+    LinkLocker&           linkLocker;
 
     std::array<unsigned char, 256> rawBuffer;
     unsigned int                   currentParamId;

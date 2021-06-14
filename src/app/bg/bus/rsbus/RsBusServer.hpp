@@ -81,7 +81,9 @@ public:
 
     int recvSessionReq();
 
-    int recvDataReq();
+    int recvDataReqShort();
+
+    int recvDataReqLong();
 
 private:
 

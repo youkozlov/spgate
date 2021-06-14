@@ -9,6 +9,7 @@
 #include "modbus/ModbusDefs.hpp"
 #include "BusStats.hpp"
 #include "RegAccessor.hpp"
+#include "LinkLocker.hpp"
 
 namespace sg
 {
@@ -87,6 +88,7 @@ private:
     unsigned const                                cliPort;
     bool const                                    isEmulMode;
     std::unique_ptr<Buffer<float>>                serverRegs;
+    LinkLocker                                    linkLocker;
 };
 
 }

@@ -28,7 +28,10 @@ RsBusClient::RsBusClient(Init const& init)
     , fsm(*this, gateParams.readTimeout)
     , link(std::unique_ptr<Link>(new LinkRl(gateParams.gateAddr)))
     , rx(*link)
+    , linkLocker(init.linkLocker)
     , currentParamId(0)
+    , deviceType(0xffff)
+    , msgId(0)
 {
     if (!storage.configure(gateParams))
     {
@@ -60,7 +63,7 @@ int RsBusClient::sendStartSequence()
 
 int RsBusClient::sendSessionReq()
 {
-    auto& item   = getNext();
+    auto& item   = getCurrent();
     auto& device = item.device;
 
     WrapBuffer txBuf(&rawBuffer[0], rawBuffer.size());
@@ -129,7 +132,7 @@ int RsBusClient::recvSessionRsp()
         return 0;
     }
 
-    uint16_t const deviceType = (frame.data[0] << 8) | frame.data[1];
+    deviceType = (frame.data[0] << 8) | frame.data[1];
 
     switch (deviceType)
     {
@@ -151,6 +154,27 @@ int RsBusClient::recvSessionRsp()
 }
 
 int RsBusClient::sendDataReq()
+{
+    switch (deviceType)
+    {
+    case DeviceType::type741:
+    case DeviceType::type941:
+        return sendShortDataReq();
+    case DeviceType::type742:
+    case DeviceType::type743:
+    case DeviceType::type9411:
+    case DeviceType::type942:
+    case DeviceType::type943:
+        return sendLongDataReq();
+    default:
+    {
+        LM(LE, "Unsupported device");
+        return -1;
+    }
+    }    
+}
+
+int RsBusClient::sendShortDataReq()
 {
     auto& item   = getCurrent();
     auto& device = item.device;
@@ -183,7 +207,56 @@ int RsBusClient::sendDataReq()
     return link->write(txBuf.cbegin(), txBuf.size());
 }
 
-int RsBusClient::recvDataRsp()
+int RsBusClient::sendLongDataReq()
+{
+    auto& item   = getCurrent();
+    auto& device = item.device;
+    auto& prms   = item.prms;
+
+    if (prms.func != RM4)
+    {
+        LM(LE, "Unsupported function code=%02X", prms.func);
+        return -1;
+    }
+
+    WrapBuffer txBuf(&rawBuffer[0], rawBuffer.size());
+    RsBusFrame frame;
+    frame.nt  = device.addr;
+    frame.rc  = prms.func;
+    frame.id  = msgId;
+    frame.atr = ATR;
+    frame.tag = TAG_PNUM;
+    frame.ch  = prms.chan;
+    frame.prm = prms.addr;
+
+    RsBusCodec codec(txBuf, frame);
+    if (!codec.encodeReqLong())
+    {
+        return -1;
+    }
+
+    stats.nRdp += 1;
+    stats.nTx  += 1;
+    return link->write(txBuf.cbegin(), txBuf.size());
+}
+
+RsBus::Result RsBusClient::recvDataRsp()
+{
+    switch (deviceType)
+    {
+    case DeviceType::type741:
+    case DeviceType::type941:
+        return recvShortDataRsp();
+    case DeviceType::type742:
+    case DeviceType::type743:
+    case DeviceType::type9411:
+    case DeviceType::type942:
+    case DeviceType::type943:
+        return recvLongDataRsp();
+    }    
+}
+
+RsBus::Result RsBusClient::recvShortDataRsp()
 {
     auto& item = getCurrent();
 
@@ -191,17 +264,17 @@ int RsBusClient::recvDataRsp()
 
     if (!len)
     {
-        return len;
+        return Result::waitForData;
     }
     else if (len == RsBusRx::invalid)
     {
         stats.nInvalid += 1;
-        return 0;
+        return Result::fail;
     }
     else if (len < 0)
     {
         stats.nError += 1;
-        return len;
+        return Result::fail;
     }
 
     stats.nRx += 1;
@@ -212,44 +285,116 @@ int RsBusClient::recvDataRsp()
 
     RsBusCodec codec(rxBuf, frame);
 
-    if (!codec.decode())
+    if (codec.decode() && frame.rc == RDP && frame.qty == sizeof(float))
     {
+        regs.setStatus(item.prms.id, RegAccessor::ready);
+        float rsbusFloat{};
+        memcpy(&rsbusFloat, frame.data, sizeof(float));
+        float const valFloat = Utils::decodeRsBus(rsbusFloat);
+        float const netFloat = (item.prms.type == ParamType::real) ? valFloat : Utils::reverse(valFloat);
+        regs.setValue(item.prms.id, netFloat);
+        stats.nRsp += 1;
+    }
+    else if (frame.rc != RDP)
+    {
+        LM(LE, "Unexpected function code=%02X", frame.rc);
         regs.setStatus(item.prms.id, RegAccessor::invalid);
         stats.nInvalid += 1;
-        return len;
     }
-
-    if (frame.rc != RDP)
+    else if (frame.qty != sizeof(float))
     {
-        LM(LE, "Unexpected function code=%02X, data[0]=%02X", frame.rc, frame.data[0]);
+        LM(LE, "Unexpected qty: %u", frame.qty);
         regs.setStatus(item.prms.id, RegAccessor::invalid);
         stats.nInvalid += 1;
-        return len;
     }
-
-    if (frame.qty != sizeof(float))
+    else
     {
-        LM(LE, "Unexpected length of respond: %u", frame.qty);
+        LM(LE, "Unable to decode");
         regs.setStatus(item.prms.id, RegAccessor::invalid);
         stats.nInvalid += 1;
-        return len;
     }
 
-    regs.setStatus(item.prms.id, RegAccessor::ready);
+    currentParamId += 1;
+    if (currentParamId == storage.getNumItems())
+    {
+        currentParamId = 0;
+        LM(LI, "All params processed");
+        return Result::done;
+    }
+    return Result::progress;    
+}
 
-    float rsbusFloat{};
-    memcpy(&rsbusFloat, frame.data, sizeof(float));
-    float const valFloat = Utils::decodeRsBus(rsbusFloat);
+RsBus::Result RsBusClient::recvLongDataRsp()
+{
+    auto& item = getCurrent();
 
-    float const netFloat = (item.prms.type == ParamType::real) ? valFloat : Utils::reverse(valFloat);
+    int len = rx.receiveLong(&rawBuffer[0], rawBuffer.size());
 
-    regs.setValue(item.prms.id, netFloat);
+    if (!len)
+    {
+        return Result::waitForData;
+    }
+    else if (len == RsBusRx::invalid)
+    {
+        stats.nInvalid += 1;
+        return Result::fail;
+    }
+    else if (len < 0)
+    {
+        stats.nError += 1;
+        return Result::fail;
+    }
 
-    stats.nRsp += 1;
+    stats.nRx += 1;
 
-    getNext();
+    WrapBuffer rxBuf(&rawBuffer[0], len);
 
-    return len;
+    RsBusFrame frame;
+
+    RsBusCodec codec(rxBuf, frame);
+
+    if (codec.decodeRspLong() && frame.rc == RM4 && frame.tag == TAG_IEEFloat)
+    {
+        regs.setStatus(item.prms.id, RegAccessor::ready);
+        float rsbusFloat{};
+        memcpy(&rsbusFloat, frame.data, sizeof(float));
+        float const netFloat = (item.prms.type == ParamType::real) ? rsbusFloat : Utils::reverse(rsbusFloat);
+        regs.setValue(item.prms.id, netFloat);
+        stats.nRsp += 1;
+    }
+    else if (frame.rc != RM4)
+    {
+        LM(LE, "Unexpected function code=%02X", frame.rc);
+        regs.setStatus(item.prms.id, RegAccessor::invalid);
+        stats.nInvalid += 1;
+    }
+    else if (frame.tag != TAG_IEEFloat)
+    {
+        LM(LE, "Unexpected tag of respond: %u", frame.tag);
+        regs.setStatus(item.prms.id, RegAccessor::invalid);
+        stats.nInvalid += 1;
+    }
+    else
+    {
+        LM(LE, "Unable to decode");
+        regs.setStatus(item.prms.id, RegAccessor::invalid);
+        stats.nInvalid += 1;
+    }
+
+    currentParamId += 1;
+    if (currentParamId == storage.getNumItems())
+    {
+        currentParamId = 0;
+        LM(LI, "All params processed");
+        return Result::done;
+    }
+    return Result::progress;
+}
+
+void RsBusClient::disconnect()
+{
+    linkLocker.unlock();
+    link->close();
 }
 
 unsigned int RsBusClient::period() const
@@ -265,19 +410,33 @@ void RsBusClient::reset()
         regs.setStatus(item.prms.id, RegAccessor::timeout);
     }
     currentParamId = 0;
+    linkLocker.unlock();
     link->close();
 }
 
-void RsBusClient::timeout()
+RsBus::Result RsBusClient::timeout()
 {
+    LM(LI, "Process paramIdx=%u/%u timeout"
+        , currentParamId
+        , storage.getNumItems());
+
     auto& item = getCurrent();
     regs.setStatus(item.prms.id, RegAccessor::timeout);
     stats.nTimeout += 1;
+    
+    currentParamId += 1;
+    if (currentParamId == storage.getNumItems())
+    {
+        currentParamId = 0;
+        LM(LI, "All params processed");
+        return Result::done;
+    }
+    return Result::progress;
 }
 
-GateReadItem const& RsBusClient::getNext()
+bool RsBusClient::tryLock()
 {
-    return storage.getItem((++currentParamId) % storage.getNumItems());
+    return linkLocker.tryLock();
 }
 
 GateReadItem const& RsBusClient::getCurrent() const

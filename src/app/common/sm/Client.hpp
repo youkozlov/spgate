@@ -29,6 +29,8 @@ public:
     virtual void reset() = 0;
 
     virtual Result timeout() = 0;
+    
+    virtual bool tryLock() = 0;
 };
 
 }

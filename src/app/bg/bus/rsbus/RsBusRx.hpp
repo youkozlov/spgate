@@ -19,6 +19,8 @@ public:
 
     int receive(unsigned char*, unsigned int);
 
+    int receiveLong(unsigned char*, unsigned int);
+
 private:
     Link& link;
 };

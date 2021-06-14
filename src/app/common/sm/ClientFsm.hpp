@@ -22,6 +22,7 @@ private:
         init,
         connect,
         idle,
+        waitingForLinkLock,
         send,
         receive,
         disconnect,
@@ -31,6 +32,7 @@ private:
     void init();
     void connect();
     void idle();
+    void waitingForLinkLock();
     void send();
     void receive();
     void disconnect();

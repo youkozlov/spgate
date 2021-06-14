@@ -84,7 +84,7 @@ int RsBusServerFsm::recvSessionReq()
 
 int RsBusServerFsm::recvDataReq()
 {
-    int result = bus.recvDataReq();
+    int result = bus.recvDataReqLong();
     if (result < 0)
     {
         changeState(State::init);
@@ -200,7 +200,7 @@ int RsBusServer::recvSessionReq()
     {
         return len;
     }
-
+    
     WrapBuffer rxBuf(&rawBuffer[0], len);
 
     RsBusFrame frame;
@@ -231,8 +231,8 @@ int RsBusServer::recvSessionReq()
     WrapBuffer txBuf(&rawBuffer[0], rawBuffer.size());
     {
         frame.rc      = SRC;
-        frame.data[0] = 0x54;
-        frame.data[1] = 0x29;
+        frame.data[0] = 0x47;
+        frame.data[1] = 0x2A;
         frame.data[2] = 0x00;
         frame.qty     = 3;
         RsBusCodec codec(txBuf, frame);
@@ -245,7 +245,7 @@ int RsBusServer::recvSessionReq()
     return link->write(txBuf.cbegin(), txBuf.size());
 }
 
-int RsBusServer::recvDataReq()
+int RsBusServer::recvDataReqShort()
 {
     int len = rx.receive(&rawBuffer[0], rawBuffer.size());
     
@@ -312,6 +312,60 @@ int RsBusServer::recvDataReq()
         }
     }
 
+    return link->write(txBuf.cbegin(), txBuf.size());
+}
+
+int RsBusServer::recvDataReqLong()
+{
+    int len = rx.receiveLong(&rawBuffer[0], rawBuffer.size());
+    
+    if (!len)
+    {
+        return len;
+    }
+    else if (len == RsBusRx::invalid)
+    {
+        return 0;
+    }
+    else if (len < 0)
+    {
+        return len;
+    }
+
+    WrapBuffer rxBuf(&rawBuffer[0], len);
+
+    RsBusFrame frame;
+
+    RsBusCodec codec(rxBuf, frame);
+
+    if (!codec.decodeReqLong())
+    {
+        return -1;
+    }
+    
+    if (frame.rc != RM4)
+    {
+        LM(LE, "Unsupported function=%02X", frame.rc);
+        return -1;
+    }
+
+    if (frame.tag != TAG_PNUM)
+    {
+        LM(LE, "Unsupported tag=%02X", frame.tag);
+        return -1;
+    }
+
+    WrapBuffer txBuf(&rawBuffer[0], rawBuffer.size());
+    {
+        float const rsbusFloat = buffer[frame.prm];
+        memcpy(frame.data, &rsbusFloat, sizeof(float));
+        frame.tag = TAG_IEEFloat;
+        RsBusCodec codec(txBuf, frame);
+        if (!codec.encodeRspLong())
+        {
+            return 0;
+        }
+    }
     return link->write(txBuf.cbegin(), txBuf.size());
 }
 

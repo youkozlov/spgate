@@ -1,6 +1,7 @@
 #include "RsBusCodec.hpp"
 #include "utils/Logger.hpp"
 #include "utils/WrapBuffer.hpp"
+#include "utils/Utils.hpp"
 
 namespace sg
 {
@@ -79,6 +80,61 @@ bool RsBusCodec::encode()
     return true;
 }
 
+bool RsBusCodec::encodeReqLong()
+{
+    if (!validateNt(frame.nt))
+    {
+        return false;
+    }
+
+    buf.write(FSC);
+    buf.write(frame.nt);
+    buf.write(FRM);
+    buf.write(frame.id);
+    buf.write(frame.atr);
+    buf.write(0x06);
+    buf.write(0x00);
+    buf.write(frame.rc);
+    buf.write(frame.tag);
+    buf.write(0x03);
+    buf.write(frame.ch);
+    buf.write(static_cast<uint8_t>(frame.prm >> 8));
+    buf.write(static_cast<uint8_t>(frame.prm));
+    unsigned int crc = Utils::crcode(buf.cbegin() + 1, buf.size() - 1);
+    buf.write(crc >> 8);
+    buf.write(crc);
+
+    return true;
+}
+
+bool RsBusCodec::encodeRspLong()
+{
+    if (!validateNt(frame.nt))
+    {
+        return false;
+    }
+
+    buf.write(FSC);
+    buf.write(frame.nt);
+    buf.write(FRM);
+    buf.write(frame.id);
+    buf.write(frame.atr);
+    buf.write(0x07);
+    buf.write(0x00);
+    buf.write(frame.rc);
+    buf.write(frame.tag);
+    buf.write(0x04);
+    buf.write(frame.data[0]);
+    buf.write(frame.data[1]);
+    buf.write(frame.data[2]);
+    buf.write(frame.data[3]);
+    unsigned int crc = Utils::crcode(buf.cbegin() + 1, buf.size() - 1);
+    buf.write(crc >> 8);
+    buf.write(crc);
+
+    return true;
+}
+
 bool RsBusCodec::decode()
 {
     unsigned char ch;
@@ -141,6 +197,191 @@ bool RsBusCodec::decode()
         LM(LE, "Unexpected end symbol: %02X", ch);
         return false;
     }
+
+    return true;
+}
+
+bool RsBusCodec::decodeRspLong()
+{
+    if (Utils::crcode(buf.cbegin() + 1, buf.size() - 1))
+    {
+        LM(LE, "Invalid crc");
+        return false;
+    }
+
+    unsigned char dummy;
+
+    // FSC
+    if (!buf.read(dummy))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    // NT
+    if (!buf.read(frame.nt))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    if (!validateNt(frame.nt))
+    {
+        return false;
+    }
+
+    // FRM
+    if (!buf.read(dummy))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    // ID
+    if (!buf.read(frame.id))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    // ATR
+    if (!buf.read(frame.atr))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    uint8_t d0, d1;
+    if (!buf.read(d0) || !buf.read(d1) || d0 != 0x7)
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    // FC
+    if (!buf.read(frame.rc))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    // TAG
+    if (!buf.read(frame.tag))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    uint8_t d2;
+    if (!buf.read(d2) || d2 != 0x4)
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    frame.qty = 4;
+    if (!buf.read(frame.data[0]) || !buf.read(frame.data[1])
+        || !buf.read(frame.data[2]) || !buf.read(frame.data[3]))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    return true;
+}
+
+bool RsBusCodec::decodeReqLong()
+{
+    if (Utils::crcode(buf.cbegin() + 1, buf.size() - 1))
+    {
+        LM(LE, "Invalid crc");
+        return false;
+    }
+
+    unsigned char dummy;
+
+    // FSC
+    if (!buf.read(dummy))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    // NT
+    if (!buf.read(frame.nt))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    if (!validateNt(frame.nt))
+    {
+        return false;
+    }
+
+    // FRM
+    if (!buf.read(dummy))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    // ID
+    if (!buf.read(frame.id))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    // ATR
+    if (!buf.read(frame.atr))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+    
+    uint8_t d0, d1;
+    if (!buf.read(d0) || !buf.read(d1))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    // FC
+    if (!buf.read(frame.rc))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    // TAG
+    if (!buf.read(frame.tag))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    uint8_t d2;
+    if (!buf.read(d2) || d2 != 0x3)
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    // CH
+    if (!buf.read(frame.ch))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    uint8_t a0, a1;
+    if (!buf.read(a0) || !buf.read(a1))
+    {
+        LM(LE, "Unexpected tb end");
+        return false;
+    }
+    frame.prm = (a0 << 8) | a1;
 
     return true;
 }
