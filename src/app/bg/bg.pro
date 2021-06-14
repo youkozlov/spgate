@@ -25,6 +25,7 @@ SOURCES +=  spgate_main.cpp \
             bus/rsbus/RsBusRx.cpp \
             bus/GateStorage.cpp \
             bus/RegAccessor.cpp \
+            bus/LinkLocker.cpp \
             cli/Cli.cpp \
             cli/TelnetServer.cpp \
             cli/TelnetPrinter.cpp \
