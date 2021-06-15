@@ -252,9 +252,15 @@ bool RsBusCodec::decodeRspLong()
     }
 
     uint8_t d0, d1;
-    if (!buf.read(d0) || !buf.read(d1) || d0 != 0x7)
+    if (!buf.read(d0) || !buf.read(d1))
     {
         LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    if (d0 != 0x7)
+    {
+        LM(LE, "Unexpected tb size(%u), expected 0x7", d0);
         return false;
     }
 
@@ -273,9 +279,15 @@ bool RsBusCodec::decodeRspLong()
     }
 
     uint8_t d2;
-    if (!buf.read(d2) || d2 != 0x4)
+    if (!buf.read(d2))
     {
         LM(LE, "Unexpected tb end");
+        return false;
+    }
+
+    if (d2 != 0x4)
+    {
+        LM(LE, "Unexpected param size(%u), expected 0x4", d2);
         return false;
     }
 

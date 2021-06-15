@@ -141,7 +141,7 @@ TEST(BusGateTest, RsBus)
     char const* testedConfig = "../cfg/default_rsbus.ini";
     float   const testedVal0 = -150000;
     float   const testedVal1 = -153.153;
-    float   const testedVal2 =  156.156;
+    float   const testedVal2 =  18.99;
 
     busBuffer[150] = testedVal0;
     busBuffer[153] = testedVal1;

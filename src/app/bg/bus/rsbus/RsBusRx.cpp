@@ -96,10 +96,14 @@ int RsBusRx::receiveLong(unsigned char* buf, unsigned int maxLen)
             {
                 continue;
             }
-            else
+            else if (rxLen)
             {
                 LM(LE, "Timeout while receive");
                 return invalid;
+            }
+            else
+            {
+                return 0;
             }
         }
         else if (result < 0)
