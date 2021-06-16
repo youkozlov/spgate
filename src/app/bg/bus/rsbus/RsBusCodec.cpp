@@ -98,8 +98,8 @@ bool RsBusCodec::encodeReqLong()
     buf.write(frame.tag);
     buf.write(0x03);
     buf.write(frame.ch);
-    buf.write(static_cast<uint8_t>(frame.prm >> 8));
     buf.write(static_cast<uint8_t>(frame.prm));
+    buf.write(static_cast<uint8_t>(frame.prm >> 8));
     unsigned int crc = Utils::crcode(buf.cbegin() + 1, buf.size() - 1);
     buf.write(crc >> 8);
     buf.write(crc);
@@ -393,7 +393,7 @@ bool RsBusCodec::decodeReqLong()
         LM(LE, "Unexpected tb end");
         return false;
     }
-    frame.prm = (a0 << 8) | a1;
+    frame.prm = (a1 << 8) | a0;
 
     return true;
 }
